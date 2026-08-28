@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,7 +34,7 @@
         .container {
             width: 100%;
             max-width: 900px;
-            margin: 0 auto;
+            margin: auto;
             padding: 24px 16px 50px;
         }
 
@@ -99,8 +100,7 @@
             margin-bottom: 7px;
         }
 
-        input,
-        select {
+        input {
             width: 100%;
             padding: 13px;
             border: 1px solid #d1d5db;
@@ -110,8 +110,7 @@
             margin-bottom: 15px;
         }
 
-        input:focus,
-        select:focus {
+        input:focus {
             border-color: #1677ff;
         }
 
@@ -121,10 +120,6 @@
             border-radius: 10px;
             margin-bottom: 10px;
             cursor: pointer;
-        }
-
-        .payment-option:hover {
-            border-color: #1677ff;
         }
 
         .payment-option input {
@@ -137,7 +132,7 @@
             border: 0;
             border-radius: 10px;
             background: #1677ff;
-            color: #ffffff;
+            color: white;
             font-size: 17px;
             font-weight: 700;
             padding: 16px;
@@ -197,12 +192,11 @@
                 gap: 6px;
             }
 
-            .product-price {
-                text-align: left;
-            }
         }
     </style>
+
 </head>
+
 
 <body>
 
@@ -210,13 +204,16 @@
         TopUpMandu
     </div>
 
+
     <main class="container">
 
         <div class="title">
             Checkout
         </div>
 
+
         <div id="error" class="error"></div>
+
 
         <div id="success" class="success"></div>
 
@@ -237,6 +234,7 @@
 
             </div>
 
+
             <div class="total-row">
 
                 <span>
@@ -252,7 +250,7 @@
         </div>
 
 
-        <!-- CUSTOMER DETAILS -->
+        <!-- CUSTOMER -->
 
         <div class="card">
 
@@ -260,36 +258,38 @@
                 👤 Customer Details
             </h2>
 
+
             <label for="name">
                 Full Name
             </label>
 
-            <input type="text" id="name" placeholder="Enter your full name" required>
+            <input type="text" id="name" placeholder="Enter your full name">
 
 
             <label for="email">
                 Email
             </label>
 
-            <input type="email" id="email" placeholder="Enter your email" required>
+            <input type="email" id="email" placeholder="Enter your email">
 
 
             <label for="phone">
                 Phone Number
             </label>
 
-            <input type="tel" id="phone" placeholder="98XXXXXXXX" required>
+            <input type="tel" id="phone" placeholder="98XXXXXXXX">
 
         </div>
 
 
-        <!-- PLAYER DETAILS -->
+        <!-- GAME DETAILS -->
 
         <div class="card">
 
             <h2>
                 🎮 Game Details
             </h2>
+
 
             <label for="player-id">
                 Player ID / UID
@@ -345,47 +345,29 @@
 
     <script>
 
-        /*
-         * Read cart from URL
-         */
+        const BACKEND =
+            "https://topupmandu-checkout-app.vercel.app";
 
-        function getCartFromURL() {
+
+        // =====================================
+        // GET CART ID FROM URL
+        // =====================================
+
+        function getCartId() {
 
             const params =
                 new URLSearchParams(
                     window.location.search
                 );
 
-            const cartParameter =
-                params.get("cart");
+            return params.get("cart_id");
 
-            if (!cartParameter) {
-                return null;
-            }
-
-            try {
-
-                return JSON.parse(
-                    decodeURIComponent(
-                        cartParameter
-                    )
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "Cart parsing error:",
-                    error
-                );
-
-                return null;
-            }
         }
 
 
-        /*
-         * Format money
-         */
+        // =====================================
+        // FORMAT MONEY
+        // =====================================
 
         function formatMoney(cents) {
 
@@ -400,21 +382,39 @@
                         maximumFractionDigits: 2
                     }
                 );
+
         }
 
 
-        /*
-         * Display cart
-         */
+        // =====================================
+        // ESCAPE HTML
+        // =====================================
+
+        function escapeHTML(value) {
+
+            const div =
+                document.createElement("div");
+
+            div.textContent =
+                value || "";
+
+            return div.innerHTML;
+
+        }
+
+
+        // =====================================
+        // DISPLAY CART
+        // =====================================
 
         function displayCart(cart) {
 
-            const itemsContainer =
+            const container =
                 document.getElementById(
                     "cart-items"
                 );
 
-            const totalElement =
+            const total =
                 document.getElementById(
                     "cart-total"
                 );
@@ -426,17 +426,17 @@
                 cart.items.length === 0
             ) {
 
-                itemsContainer.innerHTML =
-                    `
+                container.innerHTML = `
           <div class="empty">
             Your cart is empty.
           </div>
-          `;
+        `;
 
-                totalElement.textContent =
+                total.textContent =
                     "Rs. 0";
 
                 return;
+
             }
 
 
@@ -453,24 +453,32 @@
               <div>
 
                 <div class="product-name">
+
                   ${escapeHTML(
                         item.product_title ||
                         item.title ||
                         "Product"
                     )}
+
                 </div>
 
                 <div class="product-info">
-                  Quantity: ${item.quantity}
+
+                  Quantity:
+                  ${item.quantity}
+
                 </div>
 
               </div>
 
+
               <div class="product-price">
+
                 ${formatMoney(
                         item.final_line_price ||
                         item.line_price
                     )}
+
               </div>
 
             </div>
@@ -481,11 +489,11 @@
             );
 
 
-            itemsContainer.innerHTML =
+            container.innerHTML =
                 html;
 
 
-            totalElement.textContent =
+            total.textContent =
                 formatMoney(
                     cart.total_price
                 );
@@ -493,89 +501,150 @@
         }
 
 
-        /*
-         * Basic HTML escaping
-         */
+        // =====================================
+        // LOAD CART FROM BACKEND
+        // =====================================
 
-        function escapeHTML(value) {
+        async function loadCart() {
 
-            const div =
-                document.createElement("div");
+            const cartId =
+                getCartId();
 
-            div.textContent =
-                value || "";
 
-            return div.innerHTML;
+            if (!cartId) {
+
+                throw new Error(
+                    "No cart ID was provided."
+                );
+
+            }
+
+
+            const response =
+                await fetch(
+                    BACKEND +
+                    "/cart/" +
+                    encodeURIComponent(
+                        cartId
+                    )
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Cart could not be loaded."
+                );
+
+            }
+
+
+            const result =
+                await response.json();
+
+
+            if (!result.success) {
+
+                throw new Error(
+                    result.error ||
+                    "Cart could not be loaded."
+                );
+
+            }
+
+
+            return result.cart;
 
         }
 
 
-        /*
-         * Load cart
-         */
+        // =====================================
+        // INITIALIZE
+        // =====================================
 
-        const cart =
-            getCartFromURL();
+        let currentCart = null;
 
 
-        if (cart) {
+        async function initialize() {
 
-            displayCart(cart);
+            try {
 
-        } else {
+                currentCart =
+                    await loadCart();
 
-            document.getElementById(
-                "cart-items"
-            ).innerHTML = `
 
-        <div class="empty">
+                displayCart(
+                    currentCart
+                );
 
-          Your cart could not be loaded.
 
-        </div>
+            } catch (error) {
 
-      `;
+                console.error(error);
+
+
+                document.getElementById(
+                    "cart-items"
+                ).innerHTML = `
+
+          <div class="empty">
+
+            Your cart could not be loaded.
+
+          </div>
+
+        `;
+
+
+                document.getElementById(
+                    "cart-total"
+                ).textContent =
+                    "Rs. 0";
+
+            }
 
         }
 
 
-        /*
-         * Place Order
-         */
+        initialize();
+
+
+        // =====================================
+        // PLACE ORDER
+        // =====================================
 
         document
-            .getElementById("place-order")
+            .getElementById(
+                "place-order"
+            )
             .addEventListener(
                 "click",
-                function () {
-
-                    const name =
-                        document.getElementById(
-                            "name"
-                        ).value.trim();
-
-                    const email =
-                        document.getElementById(
-                            "email"
-                        ).value.trim();
-
-                    const phone =
-                        document.getElementById(
-                            "phone"
-                        ).value.trim();
-
+                async function () {
 
                     const error =
                         document.getElementById(
                             "error"
                         );
 
+                    const success =
+                        document.getElementById(
+                            "success"
+                        );
+
+                    const button =
+                        document.getElementById(
+                            "place-order"
+                        );
+
 
                     error.style.display =
                         "none";
 
+                    success.style.display =
+                        "none";
 
-                    if (!cart) {
+
+                    if (!currentCart) {
 
                         error.textContent =
                             "Your cart could not be loaded.";
@@ -584,7 +653,44 @@
                             "block";
 
                         return;
+
                     }
+
+
+                    const name =
+                        document.getElementById(
+                            "name"
+                        ).value.trim();
+
+
+                    const email =
+                        document.getElementById(
+                            "email"
+                        ).value.trim();
+
+
+                    const phone =
+                        document.getElementById(
+                            "phone"
+                        ).value.trim();
+
+
+                    const playerId =
+                        document.getElementById(
+                            "player-id"
+                        ).value.trim();
+
+
+                    const region =
+                        document.getElementById(
+                            "region"
+                        ).value.trim();
+
+
+                    const paymentMethod =
+                        document.querySelector(
+                            'input[name="payment"]:checked'
+                        )?.value || "esewa";
 
 
                     if (!name) {
@@ -596,6 +702,7 @@
                             "block";
 
                         return;
+
                     }
 
 
@@ -608,6 +715,7 @@
                             "block";
 
                         return;
+
                     }
 
 
@@ -620,26 +728,116 @@
                             "block";
 
                         return;
+
                     }
 
 
-                    /*
-                     * We will connect this button
-                     * to Shopify order creation
-                     * after the checkout display
-                     * is confirmed.
-                     */
+                    button.disabled =
+                        true;
 
-                    const success =
-                        document.getElementById(
-                            "success"
-                        );
+                    button.textContent =
+                        "Creating Order...";
 
-                    success.textContent =
-                        "Checkout details received. Payment processing will be connected next.";
 
-                    success.style.display =
-                        "block";
+                    try {
+
+                        const response =
+                            await fetch(
+                                BACKEND +
+                                "/create-order",
+                                {
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json"
+                                    },
+
+                                    body:
+                                        JSON.stringify({
+
+                                            customer: {
+
+                                                name:
+                                                    name,
+
+                                                email:
+                                                    email,
+
+                                                phone:
+                                                    phone
+
+                                            },
+
+                                            items:
+                                                currentCart.items,
+
+                                            playerId:
+                                                playerId,
+
+                                            region:
+                                                region,
+
+                                            paymentMethod:
+                                                paymentMethod
+
+                                        })
+
+                                }
+                            );
+
+
+                        const result =
+                            await response.json();
+
+
+                        if (!response.ok ||
+                            !result.success) {
+
+                            throw new Error(
+                                result.error ||
+                                "Order creation failed."
+                            );
+
+                        }
+
+
+                        success.textContent =
+                            "Order created successfully! Order: " +
+                            (
+                                result.order?.name ||
+                                ""
+                            );
+
+
+                        success.style.display =
+                            "block";
+
+
+                        button.textContent =
+                            "Order Created";
+
+
+                    } catch (error) {
+
+                        console.error(error);
+
+
+                        error.textContent =
+                            error.message;
+
+
+                        error.style.display =
+                            "block";
+
+
+                        button.disabled =
+                            false;
+
+                        button.textContent =
+                            "Place Order";
+
+                    }
 
                 }
             );
