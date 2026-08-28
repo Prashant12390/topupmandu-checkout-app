@@ -16,10 +16,7 @@
 
         body {
             margin: 0;
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             background: #f5f7fb;
             color: #111827;
         }
@@ -53,8 +50,7 @@
             padding: 20px;
             margin-bottom: 18px;
             border: 1px solid #e5e7eb;
-            box-shadow:
-                0 3px 12px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
         }
 
         .card h2 {
@@ -78,6 +74,7 @@
             display: flex;
             gap: 12px;
             align-items: center;
+            min-width: 0;
         }
 
         .product-image {
@@ -86,6 +83,7 @@
             border-radius: 9px;
             object-fit: cover;
             background: #eef2f7;
+            flex-shrink: 0;
         }
 
         .product-name {
@@ -120,7 +118,9 @@
 
         input[type="text"],
         input[type="email"],
-        input[type="tel"] {
+        input[type="tel"],
+        input[type="file"] {
+
             width: 100%;
             padding: 13px;
             border: 1px solid #d1d5db;
@@ -128,6 +128,7 @@
             font-size: 15px;
             outline: none;
             margin-bottom: 15px;
+            background: #fff;
         }
 
         input:focus {
@@ -135,6 +136,7 @@
         }
 
         .payment-option {
+
             display: flex;
             align-items: center;
             border: 1px solid #d1d5db;
@@ -142,14 +144,92 @@
             border-radius: 10px;
             margin-bottom: 10px;
             cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .payment-option:hover {
+            border-color: #1677ff;
         }
 
         .payment-option input {
+
             width: auto;
             margin: 0 8px 0 0;
         }
 
+        .payment-option.selected {
+            border-color: #1677ff;
+            background: #eff6ff;
+        }
+
+        /* QR */
+
+        #payment-qr {
+            display: none;
+            text-align: center;
+            margin-top: 18px;
+            padding: 18px;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+        }
+
+        #payment-qr h3 {
+            margin: 0 0 12px;
+            font-size: 17px;
+        }
+
+        #payment-qr img {
+            width: 260px;
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            background: white;
+        }
+
+        .qr-note {
+            margin-top: 10px;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        /* Screenshot */
+
+        .upload-box {
+            margin-top: 18px;
+            padding: 16px;
+            border: 1px dashed #9ca3af;
+            border-radius: 12px;
+            background: #f9fafb;
+        }
+
+        .upload-box strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .upload-note {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .preview {
+            display: none;
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        .preview img {
+            max-width: 260px;
+            max-height: 350px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+        }
+
         .checkout-button {
+
             width: 100%;
             border: 0;
             border-radius: 10px;
@@ -159,7 +239,7 @@
             font-weight: 700;
             padding: 16px;
             cursor: pointer;
-            margin-top: 5px;
+            margin-top: 15px;
         }
 
         .checkout-button:hover {
@@ -172,6 +252,7 @@
         }
 
         .error {
+
             background: #fee2e2;
             color: #991b1b;
             padding: 14px;
@@ -181,6 +262,7 @@
         }
 
         .success {
+
             background: #dcfce7;
             color: #166534;
             padding: 14px;
@@ -201,6 +283,10 @@
             color: #6b7280;
         }
 
+        .required {
+            color: #dc2626;
+        }
+
         @media (max-width: 600px) {
 
             .container {
@@ -219,10 +305,6 @@
                 align-items: flex-start;
             }
 
-            .product-left {
-                min-width: 0;
-            }
-
             .product-image {
                 width: 50px;
                 height: 50px;
@@ -230,6 +312,10 @@
 
             .product-price {
                 font-size: 14px;
+            }
+
+            #payment-qr img {
+                width: 230px;
             }
 
         }
@@ -240,12 +326,14 @@
 
 <body>
 
+
     <div class="header">
         TopUpMandu
     </div>
 
 
     <main class="container">
+
 
         <div class="title">
             Checkout
@@ -254,11 +342,12 @@
 
         <div id="error" class="error"></div>
 
-
         <div id="success" class="success"></div>
 
 
-        <!-- ORDER -->
+        <!-- ==========================================
+             ORDER
+        =========================================== -->
 
         <div class="card">
 
@@ -282,7 +371,7 @@
                 </span>
 
                 <span id="cart-total">
-                    Rs. 0
+                    Rs. 0.00
                 </span>
 
             </div>
@@ -290,7 +379,9 @@
         </div>
 
 
-        <!-- CUSTOMER -->
+        <!-- ==========================================
+             CUSTOMER DETAILS
+        =========================================== -->
 
         <div class="card">
 
@@ -320,7 +411,11 @@
             <input type="tel" id="phone" placeholder="98XXXXXXXX">
 
         </div>
-        <!-- GAME DETAILS -->
+
+
+        <!-- ==========================================
+             GAME DETAILS
+        =========================================== -->
 
         <div class="card" id="game-details-card" style="display:none;">
 
@@ -331,7 +426,11 @@
             <div id="game-fields"></div>
 
         </div>
-        <!-- PAYMENT -->
+
+
+        <!-- ==========================================
+             PAYMENT
+        =========================================== -->
 
         <div class="card">
 
@@ -340,74 +439,69 @@
             </h2>
 
 
-            <label class="payment-option">
+            <label class="payment-option" id="esewa-option">
 
                 <input type="radio" name="payment" value="esewa" checked>
 
-                eSewa
+                <span>
+                    eSewa
+                </span>
 
             </label>
 
 
-            <label class="payment-option">
+            <label class="payment-option" id="khalti-option">
 
                 <input type="radio" name="payment" value="khalti">
 
-                Khalti
+                <span>
+                    Khalti
+                </span>
 
             </label>
 
 
-            <!-- PAYMENT QR -->
+            <!-- QR CODE -->
 
-            <div id="payment-qr" style="
-            margin-top:18px;
-            text-align:center;
-        ">
+            <div id="payment-qr">
 
-                <p id="qr-title" style="
-                font-weight:700;
-                margin-bottom:12px;
-            ">
-                    Scan eSewa QR to Pay
-                </p>
+                <h3 id="qr-title">
+                    Scan to Pay with eSewa
+                </h3>
 
+                <img id="payment-qr-image" src="" alt="Payment QR Code">
 
-                <img id="qr-image"
-                    src="https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.48_PM.jpg?v=1787933542"
-                    alt="eSewa QR" style="
-                width:100%;
-                max-width:300px;
-                border-radius:12px;
-                border:1px solid #e5e7eb;
-            ">
+                <div class="qr-note">
+                    Scan this QR code and complete your payment.
+                </div>
 
             </div>
 
 
-            <!-- PAYMENT SCREENSHOT -->
+            <!-- ==========================================
+                 PAYMENT SCREENSHOT
+            =========================================== -->
 
-            <div style="margin-top:20px;">
+            <div class="upload-box">
 
-                <label for="payment-screenshot">
-                    📷 Payment Screenshot
-                </label>
+                <strong>
+                    📸 Payment Screenshot
+                    <span class="required">*</span>
+                </strong>
 
-                <input type="file" id="payment-screenshot" accept="image/jpeg,image/png,image/webp" style="
-                width:100%;
-                padding:12px;
-                border:1px solid #d1d5db;
-                border-radius:9px;
-                background:#ffffff;
-            ">
+                <div class="upload-note">
+                    After completing your payment, upload the payment screenshot here.
+                </div>
 
-                <small style="
-                display:block;
-                margin-top:7px;
-                color:#6b7280;
-            ">
-                    Upload a screenshot after completing your payment.
-                </small>
+
+                <input type="file" id="paymentScreenshot" accept="image/jpeg,image/png,image/webp">
+
+
+                <div id="screenshot-preview" class="preview">
+
+                    <img id="preview-image" src="" alt="Payment Screenshot Preview">
+
+                </div>
 
             </div>
 
@@ -417,213 +511,52 @@
             </button>
 
         </div>
+
+
     </main>
 
 
     <script>
 
+
+        /* ==========================================
+           BACKEND
+        =========================================== */
+
         const BACKEND =
             "https://topupmandu-checkout-app.vercel.app";
-        // ========================================
-        // PAYMENT QR CODES
-        // ========================================
+
+
+        /* ==========================================
+           QR CODES
+        =========================================== */
 
         const ESEWA_QR =
             "https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.48_PM.jpg?v=1787933542";
 
+
         const KHALTI_QR =
-            "https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.35_PM.jpg";
+            "https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.35_PM.jpg?v=1787933542";
 
 
-        // ========================================
-        // CHANGE PAYMENT QR
-        // ========================================
+        /* ==========================================
+           GAME PRODUCTS
+        =========================================== */
 
-        function updatePaymentQR() {
+        const gameProductHandles = [
 
-            const payment =
-                document.querySelector(
-                    'input[name="payment"]:checked'
-                );
+            "free-fire-diamonds",
+            "pubg-uc",
+            "clash-of-clans",
+            "valorant-ios-only",
+            "efootball-pes-2026",
+            "genshin-impact",
+            "brawl-stars",
+            "roblox",
+            "mobile-legends"
 
-            const qrImage =
-                document.getElementById("qr-image");
+        ];
 
-            const qrTitle =
-                document.getElementById("qr-title");
-
-
-            if (!payment || !qrImage || !qrTitle) {
-                return;
-            }
-
-
-            if (payment.value === "khalti") {
-
-                qrImage.src = KHALTI_QR;
-
-                qrImage.alt = "Khalti QR";
-
-                qrTitle.textContent =
-                    "Scan Khalti QR to Pay";
-
-            } else {
-
-                qrImage.src = ESEWA_QR;
-
-                qrImage.alt = "eSewa QR";
-
-                qrTitle.textContent =
-                    "Scan eSewa QR to Pay";
-
-            }
-
-        }
-
-
-        // ========================================
-        // PAYMENT METHOD CHANGE
-        // ========================================
-
-        document
-            .querySelectorAll(
-                'input[name="payment"]'
-            )
-            .forEach(function (radio) {
-
-                radio.addEventListener(
-                    "change",
-                    updatePaymentQR
-                );
-
-            });
-
-
-        // Set initial QR
-
-        updatePaymentQR();
-
-
-        /*
-         * ==========================================
-         * GET ENCODED CART FROM URL
-         * ==========================================
-         */
-
-        function getEncodedCart() {
-
-            const params =
-                new URLSearchParams(
-                    window.location.search
-                );
-
-            return params.get("cart");
-        }
-
-
-        /*
-         * ==========================================
-         * DECODE CART
-         * ==========================================
-         */
-
-        function getCartFromURL() {
-
-            const encodedCart =
-                getEncodedCart();
-
-            if (!encodedCart) {
-
-                throw new Error(
-                    "No cart data was provided."
-                );
-
-            }
-
-            try {
-
-                const binaryString =
-                    atob(encodedCart);
-
-                const bytes =
-                    Uint8Array.from(
-                        binaryString,
-                        function (character) {
-                            return character.charCodeAt(0);
-                        }
-                    );
-
-                const jsonString =
-                    new TextDecoder("utf-8")
-                        .decode(bytes);
-
-                return JSON.parse(jsonString);
-
-            } catch (error) {
-
-                console.error(
-                    "Cart decoding error:",
-                    error
-                );
-
-                throw new Error(
-                    "The cart data could not be read."
-                );
-
-            }
-
-        }
-
-
-        /*
-         * ==========================================
-         * FORMAT MONEY
-         * ==========================================
-         */
-
-        function formatMoney(cents) {
-
-            const amount =
-                Number(cents || 0) / 100;
-
-            return "Rs. " +
-                amount.toLocaleString(
-                    "en-NP",
-                    {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }
-                );
-
-        }
-
-
-        /*
-         * ==========================================
-         * ESCAPE HTML
-         * ==========================================
-         */
-
-        function escapeHTML(value) {
-
-            const div =
-                document.createElement("div");
-
-            div.textContent =
-                value == null
-                    ? ""
-                    : String(value);
-
-            return div.innerHTML;
-
-        }
-
-
-        /*
-         * ==========================================
-         * GAME PRODUCTS
-         * ==========================================
-         */
 
         const gameProductTitles = [
 
@@ -642,82 +575,380 @@
         ];
 
 
-        /*
-         * ==========================================
-         * DISPLAY CART
-         * ==========================================
-         */
+        /* ==========================================
+           GET CART
+        ========================================== */
 
-        function displayCart(cart) {
+        function getEncodedCart() {
 
-            const container =
-                document.getElementById("cart-items");
+            const params =
+                new URLSearchParams(
+                    window.location.search
+                );
 
-            const total =
-                document.getElementById("cart-total");
+            return params.get("cart");
 
-            const gameDetailsCard =
+        }
+
+
+        /* ==========================================
+           DECODE CART
+        ========================================== */
+
+        function getCartFromURL() {
+
+            const encodedCart =
+                getEncodedCart();
+
+
+            if (!encodedCart) {
+
+                throw new Error(
+                    "No cart data was provided in the URL."
+                );
+
+            }
+
+
+            try {
+
+                /*
+                 * Support normal Base64 and
+                 * URL-safe Base64.
+                 */
+
+                let base64 =
+                    encodedCart
+                        .replace(/-/g, "+")
+                        .replace(/_/g, "/");
+
+
+                /*
+                 * Add missing padding.
+                 */
+
+                while (
+                    base64.length % 4 !== 0
+                ) {
+
+                    base64 += "=";
+
+                }
+
+
+                const binaryString =
+                    atob(base64);
+
+
+                const bytes =
+                    Uint8Array.from(
+                        binaryString,
+                        function (character) {
+
+                            return character.charCodeAt(0);
+
+                        }
+                    );
+
+
+                const jsonString =
+                    new TextDecoder("utf-8")
+                        .decode(bytes);
+
+
+                const cart =
+                    JSON.parse(jsonString);
+
+
+                return cart;
+
+            } catch (error) {
+
+                console.error(
+                    "Cart decoding error:",
+                    error
+                );
+
+
+                throw new Error(
+                    "The cart data could not be read."
+                );
+
+            }
+
+        }
+
+
+        /* ==========================================
+           MONEY
+        ========================================== */
+
+        function formatMoney(cents) {
+
+            const amount =
+                Number(cents || 0) / 100;
+
+
+            return "Rs. " +
+                amount.toLocaleString(
+                    "en-NP",
+                    {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }
+                );
+
+        }
+
+
+        /* ==========================================
+           ESCAPE HTML
+        ========================================== */
+
+        function escapeHTML(value) {
+
+            const div =
+                document.createElement("div");
+
+
+            div.textContent =
+                value == null
+                    ? ""
+                    : String(value);
+
+
+            return div.innerHTML;
+
+        }
+
+
+        /* ==========================================
+           CURRENT CART
+        ========================================== */
+
+        let currentCart = null;
+
+
+        /* ==========================================
+           CHECK IF GAME PRODUCT
+        ========================================== */
+
+        function isGameProduct(item) {
+
+            const title =
+                (
+                    item.title ||
+                    item.product_title ||
+                    ""
+                ).toLowerCase();
+
+
+            if (
+                gameProductTitles.some(
+                    function (game) {
+
+                        return title.includes(
+                            game.toLowerCase()
+                        );
+
+                    }
+                )
+            ) {
+
+                return true;
+
+            }
+
+
+            if (
+                item.handle &&
+                gameProductHandles.includes(
+                    item.handle
+                )
+            ) {
+
+                return true;
+
+            }
+
+
+            return false;
+
+        }
+
+
+        /* ==========================================
+           DISPLAY GAME FIELDS
+        ========================================== */
+
+        function displayGameFields(cart) {
+
+            const card =
                 document.getElementById(
                     "game-details-card"
                 );
 
 
-            /*
-             * EMPTY CART
-             */
+            const fields =
+                document.getElementById(
+                    "game-fields"
+                );
 
-            if (
-                !cart ||
-                !cart.items ||
-                cart.items.length === 0
-            ) {
 
-                container.innerHTML = `
-            <div class="empty">
-                Your cart is empty.
-            </div>
-        `;
+            if (!card || !fields) {
+                return;
+            }
 
-                total.textContent =
-                    "Rs. 0";
 
-                if (gameDetailsCard) {
+            const gameItem =
+                cart.items.find(
+                    function (item) {
 
-                    gameDetailsCard.style.display =
-                        "none";
+                        return isGameProduct(item);
 
-                }
+                    }
+                );
+
+
+            if (!gameItem) {
+
+                card.style.display =
+                    "none";
+
+                fields.innerHTML =
+                    "";
 
                 return;
 
             }
 
 
+            card.style.display =
+                "block";
+
+
+            const title =
+                (
+                    gameItem.title ||
+                    gameItem.product_title ||
+                    ""
+                ).toLowerCase();
+
+
             /*
-             * DISPLAY CART ITEMS
+             * MOBILE LEGENDS
+             * UID + REGION
              */
+
+            if (
+                title.includes(
+                    "mobile legends"
+                )
+            ) {
+
+                fields.innerHTML = `
+
+                    <label for="player-id">
+                        UID <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="player-id"
+                        placeholder="Enter your Mobile Legends UID"
+                        autocomplete="off"
+                    >
+
+
+                    <label for="region">
+                        Region <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="region"
+                        placeholder="Enter your Region"
+                        autocomplete="off"
+                    >
+
+                `;
+
+            }
+
+            /*
+             * ALL OTHER GAMES
+             */
+
+            else {
+
+                fields.innerHTML = `
+
+                    <label for="player-id">
+                        Player ID / UID
+                        <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="player-id"
+                        placeholder="Enter your Player ID / UID"
+                        autocomplete="off"
+                    >
+
+                `;
+
+            }
+
+        }
+
+
+        /* ==========================================
+           DISPLAY CART
+        ========================================== */
+
+        function displayCart(cart) {
+
+            const container =
+                document.getElementById(
+                    "cart-items"
+                );
+
+
+            const total =
+                document.getElementById(
+                    "cart-total"
+                );
+
+
+            if (
+                !cart ||
+                !Array.isArray(cart.items) ||
+                cart.items.length === 0
+            ) {
+
+                container.innerHTML = `
+
+                    <div class="empty">
+                        Your cart is empty.
+                    </div>
+
+                `;
+
+
+                total.textContent =
+                    "Rs. 0.00";
+
+
+                return;
+
+            }
+
 
             let html = "";
 
 
             cart.items.forEach(
                 function (item) {
-
-                    const image =
-                        item.image
-                            ? `
-                        <img
-                            class="product-image"
-                            src="${escapeHTML(
-                                item.image
-                            )}"
-                            alt="${escapeHTML(
-                                item.title ||
-                                "Product"
-                            )}"
-                        >
-                      `
-                            : "";
 
 
                     const title =
@@ -736,74 +967,99 @@
                             : "";
 
 
-                    const linePrice =
-                        item.final_line_price ||
-                        item.line_price ||
-                        (
-                            Number(
-                                item.final_price ||
-                                item.price ||
-                                0
-                            ) *
-                            Number(
-                                item.quantity ||
-                                1
-                            )
+                    const quantity =
+                        Number(
+                            item.quantity || 1
                         );
+
+
+                    const linePrice =
+                        item.final_line_price != null
+
+                            ? Number(
+                                item.final_line_price
+                            )
+
+                            : item.line_price != null
+
+                                ? Number(
+                                    item.line_price
+                                )
+
+                                : Number(
+                                    item.final_price ||
+                                    item.price ||
+                                    0
+                                ) * quantity;
+
+
+                    const image =
+                        item.image
+                            ? `
+
+                                <img
+                                    class="product-image"
+                                    src="${escapeHTML(
+                                item.image
+                            )}"
+                                    alt="${escapeHTML(
+                                title
+                            )}"
+                                >
+
+                              `
+                            : "";
 
 
                     html += `
 
-                <div class="product">
+                        <div class="product">
 
-                    <div class="product-left">
+                            <div class="product-left">
 
-                        ${image}
+                                ${image}
 
-                        <div>
+                                <div>
 
-                            <div class="product-name">
+                                    <div class="product-name">
 
-                                ${escapeHTML(
+                                        ${escapeHTML(
                         title
                     )}
 
-                            </div>
+                                    </div>
 
-                            <div class="product-info">
 
-                                ${variant
+                                    <div class="product-info">
+
+                                        ${variant
                             ? escapeHTML(
                                 variant
-                            ) +
-                            " · "
+                            ) + " · "
                             : ""
                         }
 
-                                Quantity:
-                                ${escapeHTML(
-                            item.quantity ||
-                            1
+                                        Quantity:
+                                        ${quantity}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="product-price">
+
+                                ${formatMoney(
+                            linePrice
                         )}
 
                             </div>
 
                         </div>
 
-                    </div>
-
-
-                    <div class="product-price">
-
-                        ${formatMoney(
-                            linePrice
-                        )}
-
-                    </div>
-
-                </div>
-
-            `;
+                    `;
 
                 }
             );
@@ -813,221 +1069,393 @@
                 html;
 
 
-            total.textContent =
-                formatMoney(
+            /*
+             * Calculate total safely.
+             */
+
+            let totalCents =
+                Number(
                     cart.total_price
                 );
 
 
-            /*
-             * ==========================================
-             * GAME DETAILS
-             * ==========================================
-             */
+            if (
+                !Number.isFinite(
+                    totalCents
+                )
+            ) {
 
-            if (gameDetailsCard) {
+                totalCents =
+                    cart.items.reduce(
+                        function (sum, item) {
 
-                const hasGameProduct =
-                    cart.items.some(
-                        function (item) {
+                            const quantity =
+                                Number(
+                                    item.quantity || 1
+                                );
 
-                            const productTitle =
+
+                            const price =
+                                Number(
+                                    item.final_price ||
+                                    item.price ||
+                                    0
+                                );
+
+
+                            return sum +
                                 (
-                                    item.title ||
-                                    item.product_title ||
-                                    ""
-                                ).toLowerCase();
+                                    price *
+                                    quantity
+                                );
 
-
-                            return gameProductTitles.some(
-                                function (game) {
-
-                                    return productTitle.includes(
-                                        game.toLowerCase()
-                                    );
-
-                                }
-                            );
-
-                        }
+                        },
+                        0
                     );
 
-
-                if (hasGameProduct) {
-
-                    gameDetailsCard.style.display =
-                        "block";
+            }
 
 
-                    const gameFields =
-                        document.getElementById(
-                            "game-fields"
-                        );
+            total.textContent =
+                formatMoney(
+                    totalCents
+                );
 
 
-                    if (gameFields) {
+            displayGameFields(
+                cart
+            );
 
-                        /*
-                         * Find game product
-                         */
-
-                        const gameItem =
-                            cart.items.find(
-                                function (item) {
-
-                                    const productTitle =
-                                        (
-                                            item.title ||
-                                            item.product_title ||
-                                            ""
-                                        ).toLowerCase();
+        }
 
 
-                                    return gameProductTitles.some(
-                                        function (game) {
+        /* ==========================================
+           PAYMENT QR
+        ========================================== */
 
-                                            return productTitle.includes(
-                                                game.toLowerCase()
-                                            );
+        function updatePaymentQR() {
 
-                                        }
-                                    );
-
-                                }
-                            );
+            const selected =
+                document.querySelector(
+                    'input[name="payment"]:checked'
+                );
 
 
-                        const productTitle =
-                            (
-                                gameItem &&
-                                (
-                                    gameItem.title ||
-                                    gameItem.product_title ||
-                                    ""
-                                )
-                            ).toLowerCase();
+            const qrBox =
+                document.getElementById(
+                    "payment-qr"
+                );
 
 
-                        /*
-                         * MOBILE LEGENDS
-                         */
-
-                        if (
-                            productTitle.includes(
-                                "mobile legends"
-                            )
-                        ) {
-
-                            gameFields.innerHTML = `
-
-                        <label for="player-id">
-                            UID
-                        </label>
-
-                        <input
-                            type="text"
-                            id="player-id"
-                            name="player_id"
-                            placeholder="Enter your Mobile Legends UID"
-                            autocomplete="off"
-                            required
-                        >
-
-                        <label for="region">
-                            Region
-                        </label>
-
-                        <input
-                            type="text"
-                            id="region"
-                            name="region"
-                            placeholder="Enter your Region"
-                            autocomplete="off"
-                            required
-                        >
-
-                    `;
-
-                        }
+            const qrImage =
+                document.getElementById(
+                    "payment-qr-image"
+                );
 
 
-                        /*
-                         * ALL OTHER GAMES
-                         */
-
-                        else {
-
-                            gameFields.innerHTML = `
-
-                        <label for="player-id">
-                            Player ID / UID
-                        </label>
-
-                        <input
-                            type="text"
-                            id="player-id"
-                            name="player_id"
-                            placeholder="Enter your Player ID / UID"
-                            autocomplete="off"
-                            required
-                        >
-
-                    `;
-
-                        }
-
-                    }
-
-                }
+            const qrTitle =
+                document.getElementById(
+                    "qr-title"
+                );
 
 
-                else {
-
-                    gameDetailsCard.style.display =
-                        "none";
-
-
-                    const gameFields =
-                        document.getElementById(
-                            "game-fields"
-                        );
+            const esewaOption =
+                document.getElementById(
+                    "esewa-option"
+                );
 
 
-                    if (gameFields) {
+            const khaltiOption =
+                document.getElementById(
+                    "khalti-option"
+                );
 
-                        gameFields.innerHTML =
-                            "";
 
-                    }
+            if (!selected) {
 
-                }
+                qrBox.style.display =
+                    "none";
+
+                return;
+
+            }
+
+
+            /*
+             * eSewa
+             */
+
+            if (
+                selected.value ===
+                "esewa"
+            ) {
+
+                qrImage.src =
+                    ESEWA_QR;
+
+
+                qrTitle.textContent =
+                    "Scan to Pay with eSewa";
+
+
+                qrBox.style.display =
+                    "block";
+
+
+                esewaOption.classList.add(
+                    "selected"
+                );
+
+
+                khaltiOption.classList.remove(
+                    "selected"
+                );
+
+            }
+
+
+            /*
+             * Khalti
+             */
+
+            else if (
+                selected.value ===
+                "khalti"
+            ) {
+
+                qrImage.src =
+                    KHALTI_QR;
+
+
+                qrTitle.textContent =
+                    "Scan to Pay with Khalti";
+
+
+                qrBox.style.display =
+                    "block";
+
+
+                khaltiOption.classList.add(
+                    "selected"
+                );
+
+
+                esewaOption.classList.remove(
+                    "selected"
+                );
 
             }
 
         }
 
 
-        /*
-         * ==========================================
-         * CURRENT CART
-         * ==========================================
-         */
+        /* ==========================================
+           SCREENSHOT PREVIEW
+        ========================================== */
 
-        let currentCart = null;
+        document
+            .getElementById(
+                "paymentScreenshot"
+            )
+            .addEventListener(
+                "change",
+                function () {
+
+                    const file =
+                        this.files[0];
 
 
-        /*
-         * ==========================================
-         * INITIALIZE CHECKOUT
-         * ==========================================
-         */
+                    const preview =
+                        document.getElementById(
+                            "screenshot-preview"
+                        );
+
+
+                    const previewImage =
+                        document.getElementById(
+                            "preview-image"
+                        );
+
+
+                    if (!file) {
+
+                        preview.style.display =
+                            "none";
+
+                        previewImage.src =
+                            "";
+
+                        return;
+
+                    }
+
+
+                    /*
+                     * Maximum 5 MB
+                     */
+
+                    if (
+                        file.size >
+                        5 * 1024 * 1024
+                    ) {
+
+                        this.value =
+                            "";
+
+
+                        preview.style.display =
+                            "none";
+
+
+                        showError(
+                            "Payment screenshot must be smaller than 5 MB."
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    /*
+                     * Images only
+                     */
+
+                    if (
+                        !file.type.startsWith(
+                            "image/"
+                        )
+                    ) {
+
+                        this.value =
+                            "";
+
+
+                        preview.style.display =
+                            "none";
+
+
+                        showError(
+                            "Please upload an image file."
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    const reader =
+                        new FileReader();
+
+
+                    reader.onload =
+                        function (event) {
+
+                            previewImage.src =
+                                event.target.result;
+
+
+                            preview.style.display =
+                                "block";
+
+                        };
+
+
+                    reader.readAsDataURL(
+                        file
+                    );
+
+                }
+            );
+
+
+        /* ==========================================
+           PAYMENT CHANGE
+        ========================================== */
+
+        document
+            .querySelectorAll(
+                'input[name="payment"]'
+            )
+            .forEach(
+                function (radio) {
+
+                    radio.addEventListener(
+                        "change",
+                        updatePaymentQR
+                    );
+
+                }
+            );
+
+
+        /* ==========================================
+           ERROR
+        ========================================== */
+
+        function showError(message) {
+
+            const errorBox =
+                document.getElementById(
+                    "error"
+                );
+
+
+            errorBox.textContent =
+                message;
+
+
+            errorBox.style.display =
+                "block";
+
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+
+        }
+
+
+        /* ==========================================
+           SUCCESS
+        ========================================== */
+
+        function showSuccess(message) {
+
+            const successBox =
+                document.getElementById(
+                    "success"
+                );
+
+
+            successBox.textContent =
+                message;
+
+
+            successBox.style.display =
+                "block";
+
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+
+        }
+
+
+        /* ==========================================
+           INITIALIZE
+        ========================================== */
 
         function initialize() {
 
             try {
 
                 console.log(
-                    "TopUpMandu: Reading cart from URL..."
+                    "TopUpMandu: Reading cart..."
                 );
 
 
@@ -1036,7 +1464,7 @@
 
 
                 console.log(
-                    "TopUpMandu decoded cart:",
+                    "TopUpMandu cart:",
                     currentCart
                 );
 
@@ -1044,6 +1472,13 @@
                 displayCart(
                     currentCart
                 );
+
+
+                /*
+                 * Show eSewa QR by default.
+                 */
+
+                updatePaymentQR();
 
 
             } catch (error) {
@@ -1058,67 +1493,57 @@
                     "cart-items"
                 ).innerHTML = `
 
-            <div class="empty">
+                    <div class="empty">
 
-                Your cart could not be loaded.
+                        Your cart could not be loaded.
 
-                <br><br>
+                        <br><br>
 
-                <small>
-                    ${escapeHTML(
+                        <small>
+                            ${escapeHTML(
                     error.message
                 )}
-                </small>
+                        </small>
 
-            </div>
+                    </div>
 
-        `;
+                `;
 
 
                 document.getElementById(
                     "cart-total"
                 ).textContent =
-                    "Rs. 0";
+                    "Rs. 0.00";
 
 
-                const errorBox =
-                    document.getElementById(
-                        "error"
-                    );
-
-
-                errorBox.textContent =
-                    error.message;
-
-
-                errorBox.style.display =
-                    "block";
+                showError(
+                    error.message
+                );
 
             }
 
         }
 
 
-        /*
-         * ==========================================
-         * START
-         * ==========================================
-         */
+        /* ==========================================
+           START
+        ========================================== */
 
         initialize();
 
 
-        /*
-         * ==========================================
-         * PLACE ORDER
-         * ==========================================
-         */
+        /* ==========================================
+           PLACE ORDER
+        ========================================== */
 
         document
-            .getElementById("place-order")
+            .getElementById(
+                "place-order"
+            )
             .addEventListener(
                 "click",
                 async function () {
+
 
                     const errorBox =
                         document.getElementById(
@@ -1148,16 +1573,18 @@
 
                     if (!currentCart) {
 
-                        errorBox.textContent =
-                            "Your cart could not be loaded.";
-
-                        errorBox.style.display =
-                            "block";
+                        showError(
+                            "Your cart could not be loaded."
+                        );
 
                         return;
 
                     }
 
+
+                    /* ==================================
+                       CUSTOMER
+                    ================================== */
 
                     const name =
                         document.getElementById(
@@ -1177,7 +1604,11 @@
                         ).value.trim();
 
 
-                    const playerIdElement =
+                    /* ==================================
+                       GAME DETAILS
+                    ================================== */
+
+                    const playerElement =
                         document.getElementById(
                             "player-id"
                         );
@@ -1190,8 +1621,8 @@
 
 
                     const playerId =
-                        playerIdElement
-                            ? playerIdElement.value.trim()
+                        playerElement
+                            ? playerElement.value.trim()
                             : "";
 
 
@@ -1200,6 +1631,22 @@
                             ? regionElement.value.trim()
                             : "";
 
+
+                    const gameCard =
+                        document.getElementById(
+                            "game-details-card"
+                        );
+
+
+                    const gameRequired =
+                        gameCard &&
+                        gameCard.style.display !==
+                        "none";
+
+
+                    /* ==================================
+                       PAYMENT
+                    ================================== */
 
                     const paymentElement =
                         document.querySelector(
@@ -1211,29 +1658,31 @@
                         paymentElement
                             ? paymentElement.value
                             : "esewa";
+
+
+                    /* ==================================
+                       SCREENSHOT
+                    ================================== */
+
                     const screenshotInput =
                         document.getElementById(
-                            "payment-screenshot"
+                            "paymentScreenshot"
                         );
 
-                    const screenshotFile =
-                        screenshotInput &&
-                            screenshotInput.files.length > 0
-                            ? screenshotInput.files[0]
-                            : null;
+
+                    const screenshot =
+                        screenshotInput.files[0];
 
 
-                    /*
-                     * CUSTOMER VALIDATION
-                     */
+                    /* ==================================
+                       VALIDATION
+                    ================================== */
 
                     if (!name) {
 
-                        errorBox.textContent =
-                            "Please enter your full name.";
-
-                        errorBox.style.display =
-                            "block";
+                        showError(
+                            "Please enter your full name."
+                        );
 
                         return;
 
@@ -1242,11 +1691,9 @@
 
                     if (!email) {
 
-                        errorBox.textContent =
-                            "Please enter your email.";
-
-                        errorBox.style.display =
-                            "block";
+                        showError(
+                            "Please enter your email."
+                        );
 
                         return;
 
@@ -1255,141 +1702,153 @@
 
                     if (!phone) {
 
-                        errorBox.textContent =
-                            "Please enter your phone number.";
-
-                        errorBox.style.display =
-                            "block";
-
-                        return;
-
-                    }
-
-                    if (!screenshotFile) {
-
-                        errorBox.textContent =
-                            "Please upload your payment screenshot.";
-
-                        errorBox.style.display =
-                            "block";
-
-                        return;
-
-                    }
-
-                    /*
-                     * GAME FIELD VALIDATION
-                     */
-
-                    const gameDetailsCard =
-                        document.getElementById(
-                            "game-details-card"
+                        showError(
+                            "Please enter your phone number."
                         );
+
+                        return;
+
+                    }
 
 
                     if (
-                        gameDetailsCard &&
-                        gameDetailsCard.style.display !==
-                        "none"
+                        gameRequired &&
+                        !playerId
                     ) {
 
-                        if (!playerId) {
+                        showError(
+                            "Please enter your Player ID / UID."
+                        );
 
-                            errorBox.textContent =
-                                "Please enter your Player ID / UID.";
-
-                            errorBox.style.display =
-                                "block";
-
-                            return;
-
-                        }
-
-
-                        if (
-                            regionElement &&
-                            !region
-                        ) {
-
-                            errorBox.textContent =
-                                "Please enter your Region.";
-
-                            errorBox.style.display =
-                                "block";
-
-                            return;
-
-                        }
+                        return;
 
                     }
 
+
+                    if (
+                        gameRequired &&
+                        regionElement &&
+                        !region
+                    ) {
+
+                        showError(
+                            "Please enter your Region."
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (!screenshot) {
+
+                        showError(
+                            "Please upload your payment screenshot."
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (
+                        screenshot.size >
+                        5 * 1024 * 1024
+                    ) {
+
+                        showError(
+                            "Payment screenshot must be smaller than 5 MB."
+                        );
+
+                        return;
+
+                    }
+
+
+                    /* ==================================
+                       DISABLE BUTTON
+                    ================================== */
 
                     button.disabled =
                         true;
 
 
                     button.textContent =
-                        "Creating Order...";
+                        "Uploading Payment...";
 
 
                     try {
 
-                        // ========================================
-                        // UPLOAD PAYMENT SCREENSHOT
-                        // ========================================
 
-                        button.textContent =
-                            "Uploading Payment Screenshot...";
-
+                        /* ==================================
+                           FORM DATA
+                        ================================== */
 
                         const formData =
                             new FormData();
 
+
                         formData.append(
-                            "paymentScreenshot",
-                            screenshotFile
+                            "customer",
+                            JSON.stringify({
+                                name:
+                                    name,
+                                email:
+                                    email,
+                                phone:
+                                    phone
+                            })
                         );
 
 
-                        const uploadResponse =
-                            await fetch(
-                                BACKEND +
-                                "/upload-payment-screenshot",
-                                {
-                                    method: "POST",
-                                    body: formData
-                                }
-                            );
+                        formData.append(
+                            "items",
+                            JSON.stringify(
+                                currentCart.items
+                            )
+                        );
 
 
-                        const uploadResult =
-                            await uploadResponse.json();
+                        formData.append(
+                            "total_price",
+                            currentCart.total_price
+                        );
 
 
-                        if (
-                            !uploadResponse.ok ||
-                            !uploadResult.success
-                        ) {
-
-                            throw new Error(
-                                uploadResult.error ||
-                                "Payment screenshot upload failed."
-                            );
-
-                        }
+                        formData.append(
+                            "currency",
+                            currentCart.currency ||
+                            "NPR"
+                        );
 
 
-                        const screenshotUrl =
-                            uploadResult.screenshotUrl;
+                        formData.append(
+                            "playerId",
+                            playerId
+                        );
 
 
-                        // ========================================
-                        // CREATE SHOPIFY ORDER
-                        // ========================================
+                        formData.append(
+                            "region",
+                            region
+                        );
 
-                        button.textContent =
-                            "Creating Order...";
 
+                        formData.append(
+                            "paymentMethod",
+                            paymentMethod
+                        );
+
+
+                        formData.append(
+                            "paymentScreenshot",
+                            screenshot
+                        );
+
+
+                        /* ==================================
+                           SEND TO BACKEND
+                        ================================== */
 
                         const response =
                             await fetch(
@@ -1400,61 +1859,28 @@
                                     method:
                                         "POST",
 
-                                    headers: {
-
-                                        "Content-Type":
-                                            "application/json",
-
-                                        "Accept":
-                                            "application/json"
-
-                                    },
-
                                     body:
-                                        JSON.stringify({
-
-                                            customer: {
-
-                                                name:
-                                                    name,
-
-                                                email:
-                                                    email,
-
-                                                phone:
-                                                    phone
-
-                                            },
-
-                                            items:
-                                                currentCart.items,
-
-                                            total_price:
-                                                currentCart.total_price,
-
-                                            currency:
-                                                currentCart.currency,
-
-                                            playerId:
-                                                playerId,
-
-                                            region:
-                                                region,
-
-                                            paymentMethod:
-                                                paymentMethod,
-
-                                            paymentScreenshot:
-                                                screenshotUrl
-
-                                        })
+                                        formData
 
                                 }
                             );
 
 
-                        const result =
-                            await response.json();
+                        let result;
+
+
+                        try {
+
+                            result =
+                                await response.json();
+
+                        } catch (jsonError) {
+
+                            throw new Error(
+                                "The server returned an invalid response."
+                            );
+
+                        }
 
 
                         console.log(
@@ -1476,22 +1902,29 @@
                         }
 
 
-                        successBox.textContent =
-                            "Order created successfully! " +
+                        /* ==================================
+                           SUCCESS
+                        ================================== */
+
+                        showSuccess(
+
+                            "Payment screenshot received and order created successfully! " +
                             (
                                 result.order &&
                                     result.order.name
                                     ? result.order.name
                                     : ""
-                            );
+                            )
 
-
-                        successBox.style.display =
-                            "block";
+                        );
 
 
                         button.textContent =
-                            "Order Created";
+                            "Order Created ✓";
+
+
+                        button.disabled =
+                            true;
 
 
                     } catch (error) {
@@ -1502,12 +1935,9 @@
                         );
 
 
-                        errorBox.textContent =
-                            error.message;
-
-
-                        errorBox.style.display =
-                            "block";
+                        showError(
+                            error.message
+                        );
 
 
                         button.disabled =
@@ -1518,54 +1948,10 @@
                             "Place Order";
 
                     }
-            );
-        /* ==========================================
-           PAYMENT QR SWITCHING
-           ========================================== */
-
-        const paymentOptions =
-            document.querySelectorAll(
-                'input[name="payment"]'
-            );
-
-        const esewaQR =
-            document.getElementById("esewa-qr");
-
-        const khaltiQR =
-            document.getElementById("khalti-qr");
-
-
-        paymentOptions.forEach(function (radio) {
-
-            radio.addEventListener(
-                "change",
-                function () {
-
-                    if (this.value === "esewa") {
-
-                        esewaQR.style.display =
-                            "block";
-
-                        khaltiQR.style.display =
-                            "none";
-
-                    }
-
-
-                    if (this.value === "khalti") {
-
-                        esewaQR.style.display =
-                            "none";
-
-                        khaltiQR.style.display =
-                            "block";
-
-                    }
 
                 }
             );
 
-        });
     </script>
 
 </body>
