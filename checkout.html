@@ -320,7 +320,6 @@
             <input type="tel" id="phone" placeholder="98XXXXXXXX">
 
         </div>
-
         <!-- GAME DETAILS -->
 
         <div class="card" id="game-details-card" style="display:none;">
@@ -329,20 +328,9 @@
                 🎮 Game Details
             </h2>
 
-            <label for="player-id">
-                Player ID / UID
-            </label>
-
-            <input type="text" id="player-id" placeholder="Enter your Player ID / UID">
-
-            <label for="region">
-                Region
-            </label>
-
-            <input type="text" id="region" placeholder="Enter region if required">
+            <div id="game-fields"></div>
 
         </div>
-
         <!-- PAYMENT -->
 
         <div class="card">
@@ -541,14 +529,11 @@
             return div.innerHTML;
 
         }
-
-
-        /*
-         * ==========================================
-         * DISPLAY CART
-         * ==========================================
+        /* 
+         * ========================================== 
+         * DISPLAY CART 
+         * ========================================== 
          */
-
 
         function displayCart(cart) {
 
@@ -561,6 +546,10 @@
             const gameDetailsCard =
                 document.getElementById("game-details-card");
 
+
+            /* ==========================================
+               EMPTY CART
+               ========================================== */
 
             if (
                 !cart ||
@@ -583,6 +572,10 @@
                 return;
             }
 
+
+            /* ==========================================
+               DISPLAY CART ITEMS
+               ========================================== */
 
             let html = "";
 
@@ -683,17 +676,19 @@
 
             container.innerHTML = html;
 
+
             total.textContent =
                 formatMoney(cart.total_price);
 
 
             /* ==========================================
-               SHOW GAME DETAILS ONLY FOR GAME PRODUCTS
+               GAME PRODUCT DETECTION
                ========================================== */
 
             if (gameDetailsCard) {
 
                 const gameProductTitles = [
+
                     "Free Fire",
                     "Free Fire Diamond",
                     "PUBG",
@@ -705,86 +700,249 @@
                     "Brawl Stars",
                     "Roblox",
                     "Mobile Legends"
+
                 ];
 
-                const hasGameProduct = cart.items.some(function (item) {
 
-                    const productTitle =
-                        (
-                            item.title ||
-                            item.product_title ||
-                            ""
-                        ).toLowerCase();
+                /* ==========================================
+                   CHECK IF CART HAS A GAME PRODUCT
+                   ========================================== */
 
-                    return gameProductTitles.some(function (game) {
-                        return productTitle.includes(
-                            game.toLowerCase()
+                const hasGameProduct =
+                    cart.items.some(function (item) {
+
+                        const productTitle =
+                            (
+                                item.title ||
+                                item.product_title ||
+                                ""
+                            ).toLowerCase();
+
+
+                        return gameProductTitles.some(
+                            function (game) {
+
+                                return productTitle.includes(
+                                    game.toLowerCase()
+                                );
+
+                            }
                         );
+
                     });
 
-                });
 
+                /* ==========================================
+                   GAME PRODUCT FOUND
+                   ========================================== */
 
                 if (hasGameProduct) {
 
                     gameDetailsCard.style.display = "block";
 
-                } else {
 
-                    gameDetailsCard.style.display = "none";
+                    const gameFields =
+                        document.getElementById("game-fields");
+
+
+                    if (gameFields) {
+
+                        /*
+                         * Find the first game product
+                         */
+
+                        const gameItem =
+                            cart.items.find(
+                                function (item) {
+
+                                    const productTitle =
+                                        (
+                                            item.title ||
+                                            item.product_title ||
+                                            ""
+                                        ).toLowerCase();
+
+
+                                    return gameProductTitles.some(
+                                        function (game) {
+
+                                            return productTitle.includes(
+                                                game.toLowerCase()
+                                            );
+
+                                        }
+                                    );
+
+                                }
+                            );
+
+
+                        const productTitle =
+                            (
+                                gameItem?.title ||
+                                gameItem?.product_title ||
+                                ""
+                            ).toLowerCase();
+
+
+                        let fieldsHTML = "";
+
+
+                        /* ==========================================
+                           MOBILE LEGENDS
+                           UID + REGION
+                           ========================================== */
+
+                        if (
+                            productTitle.includes(
+                                "mobile legends"
+                            )
+                        ) {
+
+                            fieldsHTML = `
+
+                        <label for="player-id">
+                            UID
+                        </label>
+
+                        <input
+                            type="text"
+                            id="player-id"
+                            name="player_id"
+                            placeholder="Enter your Mobile Legends UID"
+                            autocomplete="off"
+                            required
+                        >
+
+
+                        <label for="region">
+                            Region
+                        </label>
+
+                        <input
+                            type="text"
+                            id="region"
+                            name="region"
+                            placeholder="Enter your Region"
+                            autocomplete="off"
+                            required
+                        >
+
+                    `;
+
+                        }
+
+
+                        /* ==========================================
+                           ALL OTHER GAMES
+                           PLAYER ID / UID ONLY
+                           ========================================== */
+
+                        else {
+
+                            fieldsHTML = `
+
+                        <label for="player-id">
+                            Player ID / UID
+                        </label>
+
+                        <input
+                            type="text"
+                            id="player-id"
+                            name="player_id"
+                            placeholder="Enter your Player ID / UID"
+                            autocomplete="off"
+                            required
+                        >
+
+                    `;
+
+                        }
+
+
+                        gameFields.innerHTML =
+                            fieldsHTML;
+
+                    }
+
+                }
+
+
+                /* ==========================================
+                   NO GAME PRODUCT
+                   ========================================== */
+
+                else {
+
+                    gameDetailsCard.style.display =
+                        "none";
+
+
+                    const gameFields =
+                        document.getElementById(
+                            "game-fields"
+                        );
+
+
+                    if (gameFields) {
+
+                        gameFields.innerHTML = "";
+
+                    }
 
                 }
 
             }
 
-            /*
-             * =====================================
-             * GAME PRODUCT DETECTION
-             * =====================================
-             */
+        }
+        /*
+         * =====================================
+         * GAME PRODUCT DETECTION
+         * =====================================
+         */
 
-            const gameProductHandles = [
+        const gameProductHandles = [
 
-                "free-fire-diamonds",
-                "pubg-uc",
-                "clash-of-clans",
-                "valorant-ios-only",
-                "efootball-pes-2026",
-                "genshin-impact",
-                "brawl-stars",
-                "roblox",
-                "mobile-legends"
+            "free-fire-diamonds",
+            "pubg-uc",
+            "clash-of-clans",
+            "valorant-ios-only",
+            "efootball-pes-2026",
+            "genshin-impact",
+            "brawl-stars",
+            "roblox",
+            "mobile-legends"
 
-            ];
-
-
-            /*
-             * Check if cart contains a game product.
-             */
-
-            const hasGameProduct =
-                cart.items.some(function (item) {
-
-                    return gameProductHandles.includes(
-                        item.handle
-                    );
-
-                });
+        ];
 
 
-            /*
-             * Show Game Details only
-             * when a game product exists.
-             */
+        /*
+         * Check if cart contains a game product.
+         */
 
-            if (gameDetailsCard) {
+        const hasGameProduct =
+            cart.items.some(function (item) {
 
-                gameDetailsCard.style.display =
-                    hasGameProduct
-                        ? "block"
-                        : "none";
+                return gameProductHandles.includes(
+                    item.handle
+                );
 
-            }
+            });
+
+
+        /*
+         * Show Game Details only
+         * when a game product exists.
+         */
+
+        if (gameDetailsCard) {
+
+            gameDetailsCard.style.display =
+                hasGameProduct
+                    ? "block"
+                    : "none";
+
+        }
 
         }
 
