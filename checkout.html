@@ -339,7 +339,6 @@
                 💳 Payment Method
             </h2>
 
-
             <label class="payment-option">
 
                 <input type="radio" name="payment" value="esewa" checked>
@@ -347,6 +346,30 @@
                 eSewa
 
             </label>
+
+            <!-- eSewa QR -->
+
+            <div id="esewa-qr" style="
+            text-align:center;
+            margin:15px 0 20px;
+        ">
+
+                <p style="
+            font-weight:600;
+            margin-bottom:10px;
+        ">
+                    Scan this eSewa QR to pay
+                </p>
+
+                <img src="https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.48_PM.jpg?v=1787933542"
+                    alt="eSewa QR Code" style="
+                width:220px;
+                max-width:100%;
+                border-radius:12px;
+                border:1px solid #e5e7eb;
+            ">
+
+            </div>
 
 
             <label class="payment-option">
@@ -357,13 +380,37 @@
 
             </label>
 
+            <!-- Khalti QR -->
+
+            <div id="khalti-qr" style="
+            display:none;
+            text-align:center;
+            margin:15px 0 20px;
+        ">
+
+                <p style="
+            font-weight:600;
+            margin-bottom:10px;
+        ">
+                    Scan this Khalti QR to pay
+                </p>
+
+                <img src="https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.35_PM.jpg?v=1787933542"
+                    alt="Khalti QR Code" style="
+                width:220px;
+                max-width:100%;
+                border-radius:12px;
+                border:1px solid #e5e7eb;
+            ">
+
+            </div>
+
 
             <button id="place-order" class="checkout-button">
                 Place Order
             </button>
 
         </div>
-
     </main>
 
 
@@ -1309,7 +1356,53 @@
 
                 }
             );
+        /* ==========================================
+           PAYMENT QR SWITCHING
+           ========================================== */
 
+        const paymentOptions =
+            document.querySelectorAll(
+                'input[name="payment"]'
+            );
+
+        const esewaQR =
+            document.getElementById("esewa-qr");
+
+        const khaltiQR =
+            document.getElementById("khalti-qr");
+
+
+        paymentOptions.forEach(function (radio) {
+
+            radio.addEventListener(
+                "change",
+                function () {
+
+                    if (this.value === "esewa") {
+
+                        esewaQR.style.display =
+                            "block";
+
+                        khaltiQR.style.display =
+                            "none";
+
+                    }
+
+
+                    if (this.value === "khalti") {
+
+                        esewaQR.style.display =
+                            "none";
+
+                        khaltiQR.style.display =
+                            "block";
+
+                    }
+
+                }
+            );
+
+        });
     </script>
 
 </body>
