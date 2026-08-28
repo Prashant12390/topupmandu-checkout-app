@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TopUpMandu Checkout</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #070B14;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        .checkout {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 25px;
+            font-weight: 800;
+            color: #2997FF;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: #101827;
+            border: 1px solid #202B3D;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 15px;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin: 0 0 15px;
+        }
+
+        label {
+            display: block;
+            color: #9CA8BA;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 13px;
+            border-radius: 9px;
+            border: 1px solid #202B3D;
+            background: #070B14;
+            color: #fff;
+            margin-bottom: 13px;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #1677FF;
+        }
+
+        .product {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .product-name {
+            font-weight: 700;
+        }
+
+        .price {
+            color: #2997FF;
+            font-weight: 800;
+        }
+
+        .payment-option {
+            padding: 13px;
+            border: 1px solid #202B3D;
+            border-radius: 9px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .payment-option:hover {
+            border-color: #1677FF;
+        }
+
+        .payment-option.active {
+            border-color: #1677FF;
+            background: rgba(22, 119, 255, .12);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            border: 0;
+            border-radius: 10px;
+            background: #1677FF;
+            color: white;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #2997FF;
+        }
+
+        .notice {
+            color: #9CA8BA;
+            font-size: 12px;
+            line-height: 1.5;
+            margin-top: 10px;
+        }
+
+        #message {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="checkout">
+
+        <div class="logo">
+            💎 TopUpMandu
+        </div>
+
+
+        <!-- ORDER -->
+
+        <div class="card">
+
+            <h2>🛒 Your Order</h2>
+
+            <div class="product">
+
+                <div>
+                    <div class="product-name" id="productName">
+                        Free Fire Diamond
+                    </div>
+
+                    <div class="notice">
+                        Package: 260 Diamonds
+                    </div>
+                </div>
+
+                <div class="price">
+                    Rs. 299
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- CUSTOMER -->
+
+        <div class="card">
+
+            <h2>👤 Customer Details</h2>
+
+            <label>Name</label>
+            <input id="customerName" type="text" placeholder="Your full name" required>
+
+            <label>Email</label>
+            <input id="customerEmail" type="email" placeholder="you@example.com" required>
+
+            <label>Phone</label>
+            <input id="customerPhone" type="tel" placeholder="98XXXXXXXX" required>
+
+        </div>
+
+
+        <!-- GAME DETAILS -->
+
+        <div class="card">
+
+            <h2>🎮 Game Details</h2>
+
+            <label>Player ID</label>
+
+            <input id="playerId" type="text" placeholder="Enter your Player ID" required>
+
+            <label>Region</label>
+
+            <input id="region" type="text" placeholder="Enter region">
+
+        </div>
+
+
+        <!-- PAYMENT -->
+
+        <div class="card">
+
+            <h2>💳 Payment Method</h2>
+
+            <div class="payment-option" onclick="selectPayment('eSewa', this)">
+                🟢 eSewa
+            </div>
+
+            <div class="payment-option" onclick="selectPayment('Khalti', this)">
+                🟣 Khalti
+            </div>
+
+            <input type="hidden" id="paymentMethod">
+
+            <div class="notice">
+                After selecting your payment method, we will show
+                the payment instructions.
+            </div>
+
+        </div>
+
+
+        <!-- SUBMIT -->
+
+        <div class="card">
+
+            <button onclick="placeOrder()">
+                Place Order
+            </button>
+
+            <div id="message"></div>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        let selectedPayment = "";
+
+
+        function selectPayment(method, element) {
+
+            selectedPayment = method;
+
+            document
+                .querySelectorAll(".payment-option")
+                .forEach(option => {
+                    option.classList.remove("active");
+                });
+
+            element.classList.add("active");
+
+            document.getElementById("paymentMethod").value = method;
+
+        }
+
+
+        async function placeOrder() {
+
+            const message =
+                document.getElementById("message");
+
+            const name =
+                document.getElementById("customerName").value.trim();
+
+            const email =
+                document.getElementById("customerEmail").value.trim();
+
+            const phone =
+                document.getElementById("customerPhone").value.trim();
+
+            const playerId =
+                document.getElementById("playerId").value.trim();
+
+            const region =
+                document.getElementById("region").value.trim();
+
+
+            if (!name || !email || !phone || !playerId) {
+
+                message.textContent =
+                    "Please complete all required fields.";
+
+                return;
+            }
+
+
+            if (!selectedPayment) {
+
+                message.textContent =
+                    "Please select a payment method.";
+
+                return;
+            }
+
+
+            message.textContent =
+                "Creating your order...";
+
+
+            try {
+
+                const response =
+                    await fetch("/create-order", {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+                            customer: {
+
+                                name: name,
+                                email: email,
+                                phone: phone
+
+                            },
+
+                            variantId: "48923516371176",
+
+                            quantity: 1,
+
+                            packageName: "260 Diamonds",
+
+                            playerId: playerId,
+
+                            region: region,
+
+                            paymentMethod: selectedPayment
+
+                        })
+
+                    });
+
+
+                const data =
+                    await response.json();
+
+
+                if (!data.success) {
+
+                    message.textContent =
+                        "Order failed: " +
+                        (data.error || "Unknown error");
+
+                    return;
+
+                }
+
+
+                message.textContent =
+                    "✅ Order created: " +
+                    data.order.name;
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                message.textContent =
+                    "Something went wrong.";
+
+            }
+
+        }
+
+    </script>
+
+</body>
+
+</html>
