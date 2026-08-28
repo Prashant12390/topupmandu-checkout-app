@@ -339,6 +339,7 @@
                 💳 Payment Method
             </h2>
 
+
             <label class="payment-option">
 
                 <input type="radio" name="payment" value="esewa" checked>
@@ -346,30 +347,6 @@
                 eSewa
 
             </label>
-
-            <!-- eSewa QR -->
-
-            <div id="esewa-qr" style="
-            text-align:center;
-            margin:15px 0 20px;
-        ">
-
-                <p style="
-            font-weight:600;
-            margin-bottom:10px;
-        ">
-                    Scan this eSewa QR to pay
-                </p>
-
-                <img src="https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.48_PM.jpg?v=1787933542"
-                    alt="eSewa QR Code" style="
-                width:220px;
-                max-width:100%;
-                border-radius:12px;
-                border:1px solid #e5e7eb;
-            ">
-
-            </div>
 
 
             <label class="payment-option">
@@ -380,28 +357,57 @@
 
             </label>
 
-            <!-- Khalti QR -->
 
-            <div id="khalti-qr" style="
-            display:none;
+            <!-- PAYMENT QR -->
+
+            <div id="payment-qr" style="
+            margin-top:18px;
             text-align:center;
-            margin:15px 0 20px;
         ">
 
-                <p style="
-            font-weight:600;
-            margin-bottom:10px;
-        ">
-                    Scan this Khalti QR to pay
+                <p id="qr-title" style="
+                font-weight:700;
+                margin-bottom:12px;
+            ">
+                    Scan eSewa QR to Pay
                 </p>
 
-                <img src="https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.35_PM.jpg?v=1787933542"
-                    alt="Khalti QR Code" style="
-                width:220px;
-                max-width:100%;
+
+                <img id="qr-image"
+                    src="https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.48_PM.jpg?v=1787933542"
+                    alt="eSewa QR" style="
+                width:100%;
+                max-width:300px;
                 border-radius:12px;
                 border:1px solid #e5e7eb;
             ">
+
+            </div>
+
+
+            <!-- PAYMENT SCREENSHOT -->
+
+            <div style="margin-top:20px;">
+
+                <label for="payment-screenshot">
+                    📷 Payment Screenshot
+                </label>
+
+                <input type="file" id="payment-screenshot" accept="image/jpeg,image/png,image/webp" style="
+                width:100%;
+                padding:12px;
+                border:1px solid #d1d5db;
+                border-radius:9px;
+                background:#ffffff;
+            ">
+
+                <small style="
+                display:block;
+                margin-top:7px;
+                color:#6b7280;
+            ">
+                    Upload a screenshot after completing your payment.
+                </small>
 
             </div>
 
@@ -418,6 +424,84 @@
 
         const BACKEND =
             "https://topupmandu-checkout-app.vercel.app";
+        // ========================================
+        // PAYMENT QR CODES
+        // ========================================
+
+        const ESEWA_QR =
+            "https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.48_PM.jpg?v=1787933542";
+
+        const KHALTI_QR =
+            "https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.35_PM.jpg";
+
+
+        // ========================================
+        // CHANGE PAYMENT QR
+        // ========================================
+
+        function updatePaymentQR() {
+
+            const payment =
+                document.querySelector(
+                    'input[name="payment"]:checked'
+                );
+
+            const qrImage =
+                document.getElementById("qr-image");
+
+            const qrTitle =
+                document.getElementById("qr-title");
+
+
+            if (!payment || !qrImage || !qrTitle) {
+                return;
+            }
+
+
+            if (payment.value === "khalti") {
+
+                qrImage.src = KHALTI_QR;
+
+                qrImage.alt = "Khalti QR";
+
+                qrTitle.textContent =
+                    "Scan Khalti QR to Pay";
+
+            } else {
+
+                qrImage.src = ESEWA_QR;
+
+                qrImage.alt = "eSewa QR";
+
+                qrTitle.textContent =
+                    "Scan eSewa QR to Pay";
+
+            }
+
+        }
+
+
+        // ========================================
+        // PAYMENT METHOD CHANGE
+        // ========================================
+
+        document
+            .querySelectorAll(
+                'input[name="payment"]'
+            )
+            .forEach(function (radio) {
+
+                radio.addEventListener(
+                    "change",
+                    updatePaymentQR
+                );
+
+            });
+
+
+        // Set initial QR
+
+        updatePaymentQR();
 
 
         /*
@@ -1127,6 +1211,16 @@
                         paymentElement
                             ? paymentElement.value
                             : "esewa";
+                    const screenshotInput =
+                        document.getElementById(
+                            "payment-screenshot"
+                        );
+
+                    const screenshotFile =
+                        screenshotInput &&
+                            screenshotInput.files.length > 0
+                            ? screenshotInput.files[0]
+                            : null;
 
 
                     /*
@@ -1171,6 +1265,17 @@
 
                     }
 
+                    if (!screenshotFile) {
+
+                        errorBox.textContent =
+                            "Please upload your payment screenshot.";
+
+                        errorBox.style.display =
+                            "block";
+
+                        return;
+
+                    }
 
                     /*
                      * GAME FIELD VALIDATION
@@ -1229,6 +1334,63 @@
 
                     try {
 
+                        // ========================================
+                        // UPLOAD PAYMENT SCREENSHOT
+                        // ========================================
+
+                        button.textContent =
+                            "Uploading Payment Screenshot...";
+
+
+                        const formData =
+                            new FormData();
+
+                        formData.append(
+                            "paymentScreenshot",
+                            screenshotFile
+                        );
+
+
+                        const uploadResponse =
+                            await fetch(
+                                BACKEND +
+                                "/upload-payment-screenshot",
+                                {
+                                    method: "POST",
+                                    body: formData
+                                }
+                            );
+
+
+                        const uploadResult =
+                            await uploadResponse.json();
+
+
+                        if (
+                            !uploadResponse.ok ||
+                            !uploadResult.success
+                        ) {
+
+                            throw new Error(
+                                uploadResult.error ||
+                                "Payment screenshot upload failed."
+                            );
+
+                        }
+
+
+                        const screenshotUrl =
+                            uploadResult.screenshotUrl;
+
+
+                        // ========================================
+                        // CREATE SHOPIFY ORDER
+                        // ========================================
+
+                        button.textContent =
+                            "Creating Order...";
+
+
                         const response =
                             await fetch(
                                 BACKEND +
@@ -1280,7 +1442,10 @@
                                                 region,
 
                                             paymentMethod:
-                                                paymentMethod
+                                                paymentMethod,
+
+                                            paymentScreenshot:
+                                                screenshotUrl
 
                                         })
 
@@ -1353,8 +1518,6 @@
                             "Place Order";
 
                     }
-
-                }
             );
         /* ==========================================
            PAYMENT QR SWITCHING

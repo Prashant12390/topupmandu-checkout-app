@@ -1,15 +1,87 @@
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
 
 const app = express();
+// ========================================
+// CLOUDINARY
+// ========================================
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+
+// ========================================
+// PAYMENT SCREENSHOT UPLOAD
+// ========================================
+
+const upload = multer({
+    storage: multer.memoryStorage(),
+
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    },
+
+    fileFilter: (req, file, cb) => {
+
+        if (
+            file.mimetype === "image/jpeg" ||
+            file.mimetype === "image/png" ||
+            file.mimetype === "image/webp"
+        ) {
+            cb(null, true);
+        } else {
+            cb(
+                new Error(
+                    "Only JPG, PNG and WEBP images are allowed."
+                )
+            );
+        }
+
+    }
+});
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(__dirname));
 
-const SHOPIFY_SHOP = process.env.SHOPIFY_SHOP;
-const SHOPIFY_CLIENT_ID = process.env.SHOPIFY_CLIENT_ID;
-const SHOPIFY_CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET;
+
+// ========================================
+// ENVIRONMENT VARIABLES
+// ========================================
+
+const SHOPIFY_SHOP =
+    process.env.SHOPIFY_SHOP;
+
+const SHOPIFY_CLIENT_ID =
+    process.env.SHOPIFY_CLIENT_ID;
+
+const SHOPIFY_CLIENT_SECRET =
+    process.env.SHOPIFY_CLIENT_SECRET;
+
+
+// ========================================
+// CLOUDINARY
+// ========================================
+
+cloudinary.config({
+
+    cloud_name:
+        process.env.CLOUDINARY_CLOUD_NAME,
+
+    api_key:
+        process.env.CLOUDINARY_API_KEY,
+
+    api_secret:
+        process.env.CLOUDINARY_API_SECRET
+
+});
+
+
 
 
 // ========================================
@@ -24,7 +96,11 @@ const carts = new Map();
 // ========================================
 
 app.get("/", (req, res) => {
-    res.send("TopUpMandu Custom Checkout Backend is running!");
+
+    res.send(
+        "TopUpMandu Custom Checkout Backend is running!"
+    );
+
 });
 
 
@@ -33,7 +109,14 @@ app.get("/", (req, res) => {
 // ========================================
 
 app.get("/checkout", (req, res) => {
-    res.sendFile(path.join(__dirname, "checkout.html"));
+
+    res.sendFile(
+        path.join(
+            __dirname,
+            "checkout.html"
+        )
+    );
+
 });
 
 
@@ -48,39 +131,69 @@ async function getShopifyToken() {
         !SHOPIFY_CLIENT_ID ||
         !SHOPIFY_CLIENT_SECRET
     ) {
+
         throw new Error(
             "Shopify environment variables are missing."
         );
+
     }
 
-    const response = await fetch(
-        `https://${SHOPIFY_SHOP}.myshopify.com/admin/oauth/access_token`,
-        {
-            method: "POST",
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+    const response =
+        await fetch(
 
-            body: JSON.stringify({
-                client_id: SHOPIFY_CLIENT_ID,
-                client_secret: SHOPIFY_CLIENT_SECRET,
-                grant_type: "client_credentials"
-            })
-        }
-    );
+            `https://${SHOPIFY_SHOP}.myshopify.com/admin/oauth/access_token`,
 
-    const data = await response.json();
+            {
+
+                method:
+                    "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "application/json"
+
+                },
+
+                body:
+                    JSON.stringify({
+
+                        client_id:
+                            SHOPIFY_CLIENT_ID,
+
+                        client_secret:
+                            SHOPIFY_CLIENT_SECRET,
+
+                        grant_type:
+                            "client_credentials"
+
+                    })
+
+            }
+
+        );
+
+
+    const data =
+        await response.json();
+
 
     if (!response.ok) {
+
         throw new Error(
+
             data.error_description ||
             data.error ||
             "Could not get Shopify access token"
+
         );
+
     }
 
+
     return data.access_token;
+
 }
 
 
@@ -88,85 +201,196 @@ async function getShopifyToken() {
 // TEST SHOPIFY
 // ========================================
 
-app.get("/test-shopify", async (req, res) => {
+app.get(
+    "/test-shopify",
+    async (req, res) => {
 
-    try {
+        try {
 
-        await getShopifyToken();
+            await getShopifyToken();
 
-        res.json({
-            success: true,
-            message: "Successfully connected to Shopify!"
-        });
+            res.json({
 
-    } catch (error) {
+                success:
+                    true,
 
-        console.error(error);
+                message:
+                    "Successfully connected to Shopify!"
 
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            res.status(500).json({
+
+                success:
+                    false,
+
+                error:
+                    error.message
+
+            });
+
+        }
 
     }
-
-});
+);
 
 
 // ========================================
 // SAVE CART
 // ========================================
 
-app.post("/cart", (req, res) => {
+app.post(
+    "/cart",
+    (req, res) => {
 
-    try {
+        try {
 
-        const cart = req.body;
-
-        if (
-            !cart ||
-            !Array.isArray(cart.items)
-        ) {
-
-            return res.status(400).json({
-                success: false,
-                error: "Invalid cart data."
-            });
-
-        }
+            const cart =
+                req.body;
 
 
-        if (cart.items.length === 0) {
+            if (
+                !cart ||
+                !Array.isArray(cart.items)
+            ) {
 
-            return res.status(400).json({
-                success: false,
-                error: "Cart is empty."
-            });
+                return res.status(400).json({
 
-        }
+                    success:
+                        false,
 
+                    error:
+                        "Invalid cart data."
 
-        const cartId =
-            crypto.randomUUID();
+                });
 
-
-        carts.set(
-            cartId,
-            {
-                cart: cart,
-                createdAt: Date.now()
             }
-        );
 
 
-        /*
-         * Delete carts older than 30 minutes.
-         */
+            if (
+                cart.items.length === 0
+            ) {
 
-        for (const [
-            id,
-            stored
-        ] of carts.entries()) {
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    error:
+                        "Cart is empty."
+
+                });
+
+            }
+
+
+            const cartId =
+                crypto.randomUUID();
+
+
+            carts.set(
+
+                cartId,
+
+                {
+
+                    cart:
+                        cart,
+
+                    createdAt:
+                        Date.now()
+
+                }
+
+            );
+
+
+            for (
+                const [
+                    id,
+                    stored
+                ]
+                of carts.entries()
+            ) {
+
+                if (
+                    Date.now() -
+                    stored.createdAt >
+                    30 * 60 * 1000
+                ) {
+
+                    carts.delete(id);
+
+                }
+
+            }
+
+
+            res.json({
+
+                success:
+                    true,
+
+                cartId:
+                    cartId
+
+            });
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            res.status(500).json({
+
+                success:
+                    false,
+
+                error:
+                    error.message
+
+            });
+
+        }
+
+    }
+);
+
+
+// ========================================
+// GET CART
+// ========================================
+
+app.get(
+    "/cart/:cartId",
+    (req, res) => {
+
+        try {
+
+            const stored =
+                carts.get(
+                    req.params.cartId
+                );
+
+
+            if (!stored) {
+
+                return res.status(404).json({
+
+                    success:
+                        false,
+
+                    error:
+                        "Cart not found or expired."
+
+                });
+
+            }
+
 
             if (
                 Date.now() -
@@ -174,401 +398,737 @@ app.post("/cart", (req, res) => {
                 30 * 60 * 1000
             ) {
 
-                carts.delete(id);
+                carts.delete(
+                    req.params.cartId
+                );
+
+
+                return res.status(404).json({
+
+                    success:
+                        false,
+
+                    error:
+                        "Cart has expired."
+
+                });
 
             }
 
-        }
+
+            res.json({
+
+                success:
+                    true,
+
+                cart:
+                    stored.cart
+
+            });
 
 
-        res.json({
+        } catch (error) {
 
-            success: true,
+            console.error(error);
 
-            cartId: cartId
+            res.status(500).json({
 
-        });
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-
-            success: false,
-
-            error: error.message
-
-        });
-
-    }
-
-});
-
-
-// ========================================
-// GET CART
-// ========================================
-
-app.get("/cart/:cartId", (req, res) => {
-
-    try {
-
-        const stored =
-            carts.get(
-                req.params.cartId
-            );
-
-
-        if (!stored) {
-
-            return res.status(404).json({
-
-                success: false,
+                success:
+                    false,
 
                 error:
-                    "Cart not found or expired."
+                    error.message
 
             });
 
         }
 
+    }
+);
+// ========================================
+// UPLOAD PAYMENT SCREENSHOT
+// ========================================
 
-        /*
-         * Delete after 30 minutes.
-         */
+app.post(
+    "/upload-payment-screenshot",
+    upload.single("paymentScreenshot"),
+    async (req, res) => {
 
-        if (
-            Date.now() -
-            stored.createdAt >
-            30 * 60 * 1000
-        ) {
+        try {
 
-            carts.delete(
-                req.params.cartId
+            if (!req.file) {
+
+                return res.status(400).json({
+                    success: false,
+                    error: "Payment screenshot is required."
+                });
+
+            }
+
+            const uploadResult =
+                await new Promise((resolve, reject) => {
+
+                    const stream =
+                        cloudinary.uploader.upload_stream(
+                            {
+                                folder:
+                                    "topupmandu/payment-screenshots",
+
+                                resource_type:
+                                    "image"
+                            },
+
+                            (error, result) => {
+
+                                if (error) {
+                                    reject(error);
+                                } else {
+                                    resolve(result);
+                                }
+
+                            }
+                        );
+
+                    stream.end(
+                        req.file.buffer
+                    );
+
+                });
+
+
+            res.json({
+
+                success: true,
+
+                screenshotUrl:
+                    uploadResult.secure_url
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "Screenshot upload error:",
+                error
             );
 
-            return res.status(404).json({
+            res.status(500).json({
 
                 success: false,
 
                 error:
-                    "Cart has expired."
+                    error.message
 
             });
 
         }
 
-
-        res.json({
-
-            success: true,
-
-            cart:
-                stored.cart
-
-        });
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-
-            success: false,
-
-            error: error.message
-
-        });
-
     }
-
-});
-
+);
 
 // ========================================
 // CREATE SHOPIFY ORDER
 // ========================================
 
-app.post("/create-order", async (req, res) => {
+app.post(
+    "/create-order",
+    async (req, res) => {
 
-    try {
+        try {
 
-        const {
-            customer,
-            items,
-            playerId,
-            region,
-            paymentMethod
-        } = req.body;
-
-
-        if (
-            !items ||
-            !Array.isArray(items) ||
-            items.length === 0
-        ) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                error:
-                    "Cart items are required."
-
-            });
-
-        }
+            const {
+                customer,
+                items,
+                playerId,
+                region,
+                paymentMethod,
+                paymentScreenshot
+            } = req.body;
 
 
-        const accessToken =
-            await getShopifyToken();
+            /*
+             * Parse customer and items
+             * because FormData sends strings.
+             */
+
+            let parsedCustomer =
+                customer;
+
+            let parsedItems =
+                items;
 
 
-        const lineItems =
-            items.map(item => {
+            try {
 
-                const variantId =
-                    item.variant_id ||
-                    item.variantId;
-
-
-                if (!variantId) {
-
-                    throw new Error(
-                        "Cart item is missing variant_id."
-                    );
-
-                }
-
-
-                const variantGid =
-                    String(
-                        variantId
-                    ).startsWith("gid://")
-
-                        ? variantId
-
-                        : `gid://shopify/ProductVariant/${variantId}`;
-
-
-                return {
-
-                    variantId:
-                        variantGid,
-
-                    quantity:
-                        Number(
-                            item.quantity
-                        ) || 1,
-
-                    properties: [
-
-                        {
-                            name:
-                                "Player ID",
-
-                            value:
-                                playerId ||
-                                "Not provided"
-                        },
-
-                        {
-                            name:
-                                "Region",
-
-                            value:
-                                region ||
-                                "Not provided"
-                        },
-
-                        {
-                            name:
-                                "Payment Method",
-
-                            value:
-                                paymentMethod ||
-                                "Not provided"
-                        }
-
-                    ]
-
-                };
-
-            });
-
-
-        const mutation = `
-            mutation CreateOrder(
-                $order: OrderCreateOrderInput!
-            ) {
-
-                orderCreate(
-                    order: $order
+                if (
+                    typeof customer ===
+                    "string"
                 ) {
 
-                    userErrors {
-                        field
-                        message
-                    }
-
-                    order {
-                        id
-                        name
-                        displayFinancialStatus
-                    }
+                    parsedCustomer =
+                        JSON.parse(customer);
 
                 }
+
+
+                if (
+                    typeof items ===
+                    "string"
+                ) {
+
+                    parsedItems =
+                        JSON.parse(items);
+
+                }
+
+            } catch (error) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    error:
+                        "Invalid customer or cart data."
+
+                });
 
             }
-        `;
 
 
-        const order = {
+            if (
+                !parsedItems ||
+                !Array.isArray(parsedItems) ||
+                parsedItems.length === 0
+            ) {
 
-            lineItems:
-                lineItems,
+                return res.status(400).json({
 
-            note:
-                "Order created through TopUpMandu Custom Checkout",
+                    success:
+                        false,
 
-            tags: [
-                "TopUpMandu",
-                "Custom Checkout"
-            ]
+                    error:
+                        "Cart items are required."
 
-        };
+                });
 
-
-        if (customer?.email) {
-
-            order.email =
-                customer.email;
-
-        }
+            }
 
 
-        if (customer?.phone) {
+            // ========================================
+            // UPLOAD PAYMENT SCREENSHOT
+            // ========================================
 
-            order.phone =
-                customer.phone;
-
-        }
+            let screenshotUrl =
+                "";
 
 
-        const response =
-            await fetch(
+            if (req.file) {
 
-                `https://${SHOPIFY_SHOP}.myshopify.com/admin/api/2026-07/graphql.json`,
+                screenshotUrl =
+                    await new Promise(
+                        (resolve, reject) => {
 
-                {
+                            const stream =
+                                cloudinary.uploader.upload_stream(
 
-                    method: "POST",
+                                    {
 
-                    headers: {
+                                        folder:
+                                            "topupmandu/payment-screenshots",
 
-                        "Content-Type":
-                            "application/json",
+                                        resource_type:
+                                            "image"
 
-                        "X-Shopify-Access-Token":
-                            accessToken
+                                    },
 
-                    },
+                                    (
+                                        error,
+                                        result
+                                    ) => {
 
-                    body:
-                        JSON.stringify({
+                                        if (error) {
 
-                            query:
-                                mutation,
+                                            reject(error);
 
-                            variables: {
-                                order:
-                                    order
-                            }
+                                        } else {
 
-                        })
+                                            resolve(
+                                                result.secure_url
+                                            );
+
+                                        }
+
+                                    }
+
+                                );
+
+
+                            stream.end(
+                                req.file.buffer
+                            );
+
+                        }
+                    );
+
+            }
+
+
+            // ========================================
+            // SHOPIFY TOKEN
+            // ========================================
+
+            const accessToken =
+                await getShopifyToken();
+
+
+            // ========================================
+            // SHOPIFY LINE ITEMS
+            // ========================================
+
+            const lineItems =
+                parsedItems.map(
+                    item => {
+
+                        const variantId =
+                            item.variant_id ||
+                            item.variantId;
+
+
+                        if (!variantId) {
+
+                            throw new Error(
+                                "Cart item is missing variant_id."
+                            );
+
+                        }
+
+
+                        const variantGid =
+                            String(
+                                variantId
+                            ).startsWith(
+                                "gid://"
+                            )
+
+                                ? variantId
+
+                                : `gid://shopify/ProductVariant/${variantId}`;
+
+
+                        return {
+
+                            variantId:
+                                variantGid,
+
+                            quantity:
+                                Number(
+                                    item.quantity
+                                ) || 1,
+
+                            properties: [
+
+                                {
+
+                                    name:
+                                        "Player ID",
+
+                                    value:
+                                        playerId ||
+                                        "Not provided"
+
+                                },
+
+                                {
+
+                                    name:
+                                        "Region",
+
+                                    value:
+                                        region ||
+                                        "Not provided"
+
+                                },
+
+                                {
+
+                                    name:
+                                        "Payment Method",
+
+                                    value:
+                                        paymentMethod ||
+                                        "Not provided"
+
+                                }
+
+                            ]
+
+                        };
+
+                    }
+                );
+
+
+            // ========================================
+            // SHOPIFY ORDER
+            // ========================================
+
+            const mutation = `
+
+                mutation CreateOrder(
+                    $order: OrderCreateOrderInput!
+                ) {
+
+                    orderCreate(
+                        order: $order
+                    ) {
+
+                        userErrors {
+
+                            field
+
+                            message
+
+                        }
+
+                        order {
+
+                            id
+
+                            name
+
+                            displayFinancialStatus
+
+                        }
+
+                    }
 
                 }
 
+            `;
+
+
+            const order = {
+
+                lineItems:
+                    lineItems,
+
+                note:
+                    "Order created through TopUpMandu Custom Checkout",
+
+                tags: [
+                    "TopUpMandu",
+                    "Custom Checkout"
+                ]
+
+            };
+
+
+            // ========================================
+            // PAYMENT SCREENSHOT
+            // ========================================
+
+            if (paymentScreenshot) {
+
+                order.note +=
+                    "\nPayment Screenshot: " +
+                    paymentScreenshot;
+
+            }
+
+
+            // ========================================
+            // CUSTOMER INFORMATION
+            // ========================================
+
+            if (
+                parsedCustomer?.email
+            ) {
+
+                order.email =
+                    parsedCustomer.email;
+
+            }
+
+
+            if (
+                parsedCustomer?.phone
+            ) {
+
+                order.phone =
+                    parsedCustomer.phone;
+
+            }
+
+
+            // ========================================
+            // ORDER CUSTOM ATTRIBUTES
+            // ========================================
+
+            const attributes = [];
+
+
+            if (screenshotUrl) {
+
+                attributes.push({
+
+                    key:
+                        "Payment Screenshot",
+
+                    value:
+                        screenshotUrl
+
+                });
+
+            }
+
+
+            attributes.push({
+
+                key:
+                    "Payment Method",
+
+                value:
+                    paymentMethod ||
+                    "Not provided"
+
+            });
+
+
+            if (playerId) {
+
+                attributes.push({
+
+                    key:
+                        "Player ID",
+
+                    value:
+                        playerId
+
+                });
+
+            }
+
+
+            if (region) {
+
+                attributes.push({
+
+                    key:
+                        "Region",
+
+                    value:
+                        region
+
+                });
+
+            }
+
+
+            order.customAttributes =
+                attributes;
+
+
+            // ========================================
+            // SEND TO SHOPIFY
+            // ========================================
+
+            const response =
+                await fetch(
+
+                    `https://${SHOPIFY_SHOP}.myshopify.com/admin/api/2026-07/graphql.json`,
+
+                    {
+
+                        method:
+                            "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json",
+
+                            "X-Shopify-Access-Token":
+                                accessToken
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                query:
+                                    mutation,
+
+                                variables: {
+
+                                    order:
+                                        order
+
+                                }
+
+                            })
+
+                    }
+
+                );
+
+
+            const result =
+                await response.json();
+
+
+            console.log(
+                "Shopify response:",
+                JSON.stringify(
+                    result,
+                    null,
+                    2
+                )
             );
 
 
-        const result =
-            await response.json();
+            if (result.errors) {
+
+                return res.status(500).json({
+
+                    success:
+                        false,
+
+                    error:
+                        result.errors
+
+                });
+
+            }
 
 
-        if (result.errors) {
+            const orderResult =
+                result.data?.orderCreate;
 
-            return res.status(500).json({
 
-                success: false,
+            if (
+                !orderResult ||
+                orderResult.userErrors?.length
+            ) {
+
+                return res.status(400).json({
+
+                    success:
+                        false,
+
+                    errors:
+                        orderResult?.userErrors ||
+                        [
+
+                            {
+
+                                message:
+                                    "Shopify order creation failed."
+
+                            }
+
+                        ]
+
+                });
+
+            }
+
+
+            // ========================================
+            // SUCCESS
+            // ========================================
+
+            res.json({
+
+                success:
+                    true,
+
+                message:
+                    "Order created successfully!",
+
+                screenshotUrl:
+                    screenshotUrl || null,
+
+                order:
+                    orderResult.order
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "CREATE ORDER ERROR:",
+                error
+            );
+
+
+            res.status(500).json({
+
+                success:
+                    false,
 
                 error:
-                    result.errors
+                    error.message
 
             });
 
         }
 
+    }
+);
 
-        const orderResult =
-            result.data?.orderCreate;
 
+// ========================================
+// MULTER ERROR HANDLER
+// ========================================
+
+app.use(
+    (error, req, res, next) => {
 
         if (
-            !orderResult ||
-            orderResult.userErrors?.length
+            error instanceof
+            multer.MulterError
         ) {
 
             return res.status(400).json({
 
-                success: false,
+                success:
+                    false,
 
-                errors:
-                    orderResult?.userErrors ||
-                    [
-                        {
-                            message:
-                                "Shopify order creation failed."
-                        }
-                    ]
+                error:
+                    "Screenshot upload failed: " +
+                    error.message
 
             });
 
         }
 
 
-        res.json({
+        if (
+            error &&
+            error.message ===
+            "Only image files are allowed."
+        ) {
 
-            success: true,
+            return res.status(400).json({
 
-            message:
-                "Order created successfully!",
+                success:
+                    false,
 
-            order:
-                orderResult.order
+                error:
+                    error.message
 
-        });
+            });
+
+        }
 
 
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-
-            success: false,
-
-            error:
-                error.message
-
-        });
+        next(error);
 
     }
-
-});
+);
 
 
 // ========================================
