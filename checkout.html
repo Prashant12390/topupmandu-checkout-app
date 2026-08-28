@@ -377,13 +377,7 @@
          * ==========================================
          * GET ENCODED CART FROM URL
          * ==========================================
-         *
-         * Shopify now sends:
-         *
-         * ?cart=XXXXXXXX
-         *
          */
-
 
         function getEncodedCart() {
 
@@ -393,7 +387,6 @@
                 );
 
             return params.get("cart");
-
         }
 
 
@@ -403,12 +396,10 @@
          * ==========================================
          */
 
-
         function getCartFromURL() {
 
             const encodedCart =
                 getEncodedCart();
-
 
             if (!encodedCart) {
 
@@ -418,22 +409,10 @@
 
             }
 
-
             try {
-
-                /*
-                 * URLSearchParams automatically
-                 * converts %3D back to =
-                 */
 
                 const binaryString =
                     atob(encodedCart);
-
-
-                /*
-                 * Convert binary data back
-                 * into UTF-8 text.
-                 */
 
                 const bytes =
                     Uint8Array.from(
@@ -443,20 +422,11 @@
                         }
                     );
 
-
                 const jsonString =
-                    new TextDecoder(
-                        "utf-8"
-                    ).decode(bytes);
+                    new TextDecoder("utf-8")
+                        .decode(bytes);
 
-
-                const cart =
-                    JSON.parse(
-                        jsonString
-                    );
-
-
-                return cart;
+                return JSON.parse(jsonString);
 
             } catch (error) {
 
@@ -478,20 +448,12 @@
          * ==========================================
          * FORMAT MONEY
          * ==========================================
-         *
-         * Shopify prices are in cents.
-         *
-         * Example:
-         *
-         * 10000 = Rs. 100.00
          */
-
 
         function formatMoney(cents) {
 
             const amount =
                 Number(cents || 0) / 100;
-
 
             return "Rs. " +
                 amount.toLocaleString(
@@ -511,28 +473,48 @@
          * ==========================================
          */
 
-
         function escapeHTML(value) {
 
             const div =
-                document.createElement(
-                    "div"
-                );
-
+                document.createElement("div");
 
             div.textContent =
                 value == null
                     ? ""
                     : String(value);
 
-
             return div.innerHTML;
 
         }
-        /* 
-         * ========================================== 
-         * DISPLAY CART 
-         * ========================================== 
+
+
+        /*
+         * ==========================================
+         * GAME PRODUCTS
+         * ==========================================
+         */
+
+        const gameProductTitles = [
+
+            "Free Fire",
+            "Free Fire Diamond",
+            "PUBG",
+            "PUBG UC",
+            "Clash of Clans",
+            "Valorant",
+            "eFootball",
+            "Genshin Impact",
+            "Brawl Stars",
+            "Roblox",
+            "Mobile Legends"
+
+        ];
+
+
+        /*
+         * ==========================================
+         * DISPLAY CART
+         * ==========================================
          */
 
         function displayCart(cart) {
@@ -544,12 +526,14 @@
                 document.getElementById("cart-total");
 
             const gameDetailsCard =
-                document.getElementById("game-details-card");
+                document.getElementById(
+                    "game-details-card"
+                );
 
 
-            /* ==========================================
-               EMPTY CART
-               ========================================== */
+            /*
+             * EMPTY CART
+             */
 
             if (
                 !cart ||
@@ -563,192 +547,197 @@
             </div>
         `;
 
-                total.textContent = "Rs. 0";
+                total.textContent =
+                    "Rs. 0";
 
                 if (gameDetailsCard) {
-                    gameDetailsCard.style.display = "none";
+
+                    gameDetailsCard.style.display =
+                        "none";
+
                 }
 
                 return;
+
             }
 
 
-            /* ==========================================
-               DISPLAY CART ITEMS
-               ========================================== */
+            /*
+             * DISPLAY CART ITEMS
+             */
 
             let html = "";
 
 
-            cart.items.forEach(function (item) {
+            cart.items.forEach(
+                function (item) {
 
-                const image =
-                    item.image
-                        ? `
-                    <img
-                        class="product-image"
-                        src="${escapeHTML(item.image)}"
-                        alt="${escapeHTML(
-                            item.title ||
-                            "Product"
-                        )}"
-                    >
-                  `
-                        : "";
-
-
-                const title =
-                    item.title ||
-                    item.product_title ||
-                    "Product";
+                    const image =
+                        item.image
+                            ? `
+                        <img
+                            class="product-image"
+                            src="${escapeHTML(
+                                item.image
+                            )}"
+                            alt="${escapeHTML(
+                                item.title ||
+                                "Product"
+                            )}"
+                        >
+                      `
+                            : "";
 
 
-                const variant =
-                    item.variant_title &&
-                        item.variant_title !== "Default Title"
-                        ? item.variant_title
-                        : "";
+                    const title =
+                        item.title ||
+                        item.product_title ||
+                        "Product";
 
 
-                const linePrice =
-                    item.final_line_price ||
-                    item.line_price ||
-                    (
-                        Number(
-                            item.final_price ||
-                            item.price ||
-                            0
-                        ) *
-                        Number(
+                    const variant =
+                        item.variant_title &&
+                            item.variant_title !==
+                            "Default Title"
+
+                            ? item.variant_title
+
+                            : "";
+
+
+                    const linePrice =
+                        item.final_line_price ||
+                        item.line_price ||
+                        (
+                            Number(
+                                item.final_price ||
+                                item.price ||
+                                0
+                            ) *
+                            Number(
+                                item.quantity ||
+                                1
+                            )
+                        );
+
+
+                    html += `
+
+                <div class="product">
+
+                    <div class="product-left">
+
+                        ${image}
+
+                        <div>
+
+                            <div class="product-name">
+
+                                ${escapeHTML(
+                        title
+                    )}
+
+                            </div>
+
+                            <div class="product-info">
+
+                                ${variant
+                            ? escapeHTML(
+                                variant
+                            ) +
+                            " · "
+                            : ""
+                        }
+
+                                Quantity:
+                                ${escapeHTML(
                             item.quantity ||
                             1
-                        )
-                    );
+                        )}
 
-
-                html += `
-
-            <div class="product">
-
-                <div class="product-left">
-
-                    ${image}
-
-                    <div>
-
-                        <div class="product-name">
-
-                            ${escapeHTML(title)}
-
-                        </div>
-
-                        <div class="product-info">
-
-                            ${variant
-                        ? escapeHTML(variant) + " · "
-                        : ""
-                    }
-
-                            Quantity:
-                            ${escapeHTML(
-                        item.quantity || 1
-                    )}
+                            </div>
 
                         </div>
 
                     </div>
 
+
+                    <div class="product-price">
+
+                        ${formatMoney(
+                            linePrice
+                        )}
+
+                    </div>
+
                 </div>
 
+            `;
 
-                <div class="product-price">
-
-                    ${formatMoney(linePrice)}
-
-                </div>
-
-            </div>
-
-        `;
-
-            });
+                }
+            );
 
 
-            container.innerHTML = html;
+            container.innerHTML =
+                html;
 
 
             total.textContent =
-                formatMoney(cart.total_price);
+                formatMoney(
+                    cart.total_price
+                );
 
 
-            /* ==========================================
-               GAME PRODUCT DETECTION
-               ========================================== */
+            /*
+             * ==========================================
+             * GAME DETAILS
+             * ==========================================
+             */
 
             if (gameDetailsCard) {
 
-                const gameProductTitles = [
-
-                    "Free Fire",
-                    "Free Fire Diamond",
-                    "PUBG",
-                    "PUBG UC",
-                    "Clash of Clans",
-                    "Valorant",
-                    "eFootball",
-                    "Genshin Impact",
-                    "Brawl Stars",
-                    "Roblox",
-                    "Mobile Legends"
-
-                ];
-
-
-                /* ==========================================
-                   CHECK IF CART HAS A GAME PRODUCT
-                   ========================================== */
-
                 const hasGameProduct =
-                    cart.items.some(function (item) {
+                    cart.items.some(
+                        function (item) {
 
-                        const productTitle =
-                            (
-                                item.title ||
-                                item.product_title ||
-                                ""
-                            ).toLowerCase();
-
-
-                        return gameProductTitles.some(
-                            function (game) {
-
-                                return productTitle.includes(
-                                    game.toLowerCase()
-                                );
-
-                            }
-                        );
-
-                    });
+                            const productTitle =
+                                (
+                                    item.title ||
+                                    item.product_title ||
+                                    ""
+                                ).toLowerCase();
 
 
-                /* ==========================================
-                   GAME PRODUCT FOUND
-                   ========================================== */
+                            return gameProductTitles.some(
+                                function (game) {
+
+                                    return productTitle.includes(
+                                        game.toLowerCase()
+                                    );
+
+                                }
+                            );
+
+                        }
+                    );
+
 
                 if (hasGameProduct) {
 
-                    gameDetailsCard.style.display = "block";
+                    gameDetailsCard.style.display =
+                        "block";
 
 
                     const gameFields =
-                        document.getElementById("game-fields");
+                        document.getElementById(
+                            "game-fields"
+                        );
 
 
                     if (gameFields) {
 
                         /*
-                         * Find the first game product
+                         * Find game product
                          */
 
                         const gameItem =
@@ -779,19 +768,18 @@
 
                         const productTitle =
                             (
-                                gameItem?.title ||
-                                gameItem?.product_title ||
-                                ""
+                                gameItem &&
+                                (
+                                    gameItem.title ||
+                                    gameItem.product_title ||
+                                    ""
+                                )
                             ).toLowerCase();
 
 
-                        let fieldsHTML = "";
-
-
-                        /* ==========================================
-                           MOBILE LEGENDS
-                           UID + REGION
-                           ========================================== */
+                        /*
+                         * MOBILE LEGENDS
+                         */
 
                         if (
                             productTitle.includes(
@@ -799,7 +787,7 @@
                             )
                         ) {
 
-                            fieldsHTML = `
+                            gameFields.innerHTML = `
 
                         <label for="player-id">
                             UID
@@ -813,7 +801,6 @@
                             autocomplete="off"
                             required
                         >
-
 
                         <label for="region">
                             Region
@@ -833,14 +820,13 @@
                         }
 
 
-                        /* ==========================================
-                           ALL OTHER GAMES
-                           PLAYER ID / UID ONLY
-                           ========================================== */
+                        /*
+                         * ALL OTHER GAMES
+                         */
 
                         else {
 
-                            fieldsHTML = `
+                            gameFields.innerHTML = `
 
                         <label for="player-id">
                             Player ID / UID
@@ -859,18 +845,10 @@
 
                         }
 
-
-                        gameFields.innerHTML =
-                            fieldsHTML;
-
                     }
 
                 }
 
-
-                /* ==========================================
-                   NO GAME PRODUCT
-                   ========================================== */
 
                 else {
 
@@ -886,7 +864,8 @@
 
                     if (gameFields) {
 
-                        gameFields.innerHTML = "";
+                        gameFields.innerHTML =
+                            "";
 
                     }
 
@@ -895,63 +874,13 @@
             }
 
         }
-        /*
-         * =====================================
-         * GAME PRODUCT DETECTION
-         * =====================================
-         */
 
-        const gameProductHandles = [
-
-            "free-fire-diamonds",
-            "pubg-uc",
-            "clash-of-clans",
-            "valorant-ios-only",
-            "efootball-pes-2026",
-            "genshin-impact",
-            "brawl-stars",
-            "roblox",
-            "mobile-legends"
-
-        ];
-
-
-        /*
-         * Check if cart contains a game product.
-         */
-
-        const hasGameProduct =
-            cart.items.some(function (item) {
-
-                return gameProductHandles.includes(
-                    item.handle
-                );
-
-            });
-
-
-        /*
-         * Show Game Details only
-         * when a game product exists.
-         */
-
-        if (gameDetailsCard) {
-
-            gameDetailsCard.style.display =
-                hasGameProduct
-                    ? "block"
-                    : "none";
-
-        }
-
-        }
 
         /*
          * ==========================================
          * CURRENT CART
          * ==========================================
          */
-
 
         let currentCart = null;
 
@@ -961,7 +890,6 @@
          * INITIALIZE CHECKOUT
          * ==========================================
          */
-
 
         function initialize() {
 
@@ -999,21 +927,21 @@
                     "cart-items"
                 ).innerHTML = `
 
-                    <div class="empty">
+            <div class="empty">
 
-                        Your cart could not be loaded.
+                Your cart could not be loaded.
 
-                        <br><br>
+                <br><br>
 
-                        <small>
-                            ${escapeHTML(
+                <small>
+                    ${escapeHTML(
                     error.message
                 )}
-                        </small>
+                </small>
 
-                    </div>
+            </div>
 
-                `;
+        `;
 
 
                 document.getElementById(
@@ -1041,7 +969,9 @@
 
 
         /*
+         * ==========================================
          * START
+         * ==========================================
          */
 
         initialize();
@@ -1053,11 +983,8 @@
          * ==========================================
          */
 
-
         document
-            .getElementById(
-                "place-order"
-            )
+            .getElementById("place-order")
             .addEventListener(
                 "click",
                 async function () {
@@ -1119,24 +1046,45 @@
                         ).value.trim();
 
 
-                    const playerId =
+                    const playerIdElement =
                         document.getElementById(
                             "player-id"
-                        ).value.trim();
+                        );
+
+
+                    const regionElement =
+                        document.getElementById(
+                            "region"
+                        );
+
+
+                    const playerId =
+                        playerIdElement
+                            ? playerIdElement.value.trim()
+                            : "";
 
 
                     const region =
-                        document.getElementById(
-                            "region"
-                        ).value.trim();
+                        regionElement
+                            ? regionElement.value.trim()
+                            : "";
+
+
+                    const paymentElement =
+                        document.querySelector(
+                            'input[name="payment"]:checked'
+                        );
 
 
                     const paymentMethod =
-                        document.querySelector(
-                            'input[name="payment"]:checked'
-                        )?.value ||
-                        "esewa";
+                        paymentElement
+                            ? paymentElement.value
+                            : "esewa";
 
+
+                    /*
+                     * CUSTOMER VALIDATION
+                     */
 
                     if (!name) {
 
@@ -1177,6 +1125,53 @@
                     }
 
 
+                    /*
+                     * GAME FIELD VALIDATION
+                     */
+
+                    const gameDetailsCard =
+                        document.getElementById(
+                            "game-details-card"
+                        );
+
+
+                    if (
+                        gameDetailsCard &&
+                        gameDetailsCard.style.display !==
+                        "none"
+                    ) {
+
+                        if (!playerId) {
+
+                            errorBox.textContent =
+                                "Please enter your Player ID / UID.";
+
+                            errorBox.style.display =
+                                "block";
+
+                            return;
+
+                        }
+
+
+                        if (
+                            regionElement &&
+                            !region
+                        ) {
+
+                            errorBox.textContent =
+                                "Please enter your Region.";
+
+                            errorBox.style.display =
+                                "block";
+
+                            return;
+
+                        }
+
+                    }
+
+
                     button.disabled =
                         true;
 
@@ -1186,11 +1181,6 @@
 
 
                     try {
-
-                        /*
-                         * Send the entire cart to
-                         * the backend.
-                         */
 
                         const response =
                             await fetch(
@@ -1277,8 +1267,10 @@
                         successBox.textContent =
                             "Order created successfully! " +
                             (
-                                result.order?.name ||
-                                ""
+                                result.order &&
+                                    result.order.name
+                                    ? result.order.name
+                                    : ""
                             );
 
 
