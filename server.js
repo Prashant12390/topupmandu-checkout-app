@@ -3,14 +3,14 @@ const path = require("path");
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 // Serve checkout.html and other files
 app.use(express.static(__dirname));
 
 const SHOPIFY_SHOP = process.env.SHOPIFY_SHOP;
 const SHOPIFY_CLIENT_ID = process.env.SHOPIFY_CLIENT_ID;
-const SHOPIFY_CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET;
+const SHOPIFY_CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET);
 
 
 // ===============================
@@ -36,6 +36,16 @@ app.get("/checkout", (req, res) => {
 // ===============================
 
 async function getShopifyToken() {
+
+    if (
+        !SHOPIFY_SHOP ||
+        !SHOPIFY_CLIENT_ID ||
+        !SHOPIFY_CLIENT_SECRET
+    ) {
+        throw new Error(
+            "Shopify environment variables are missing."
+        );
+    }
 
     const response = await fetch(
         `https://${SHOPIFY_SHOP}.myshopify.com/admin/oauth/access_token`,
@@ -98,6 +108,47 @@ app.get("/test-shopify", async (req, res) => {
 
 
 // ===============================
+// RECEIVE CART
+// ===============================
+
+app.post("/cart", (req, res) => {
+
+    try {
+
+        const cart = req.body;
+
+        if (
+            !cart ||
+            !Array.isArray(cart.items)
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                error: "Invalid cart data."
+            });
+
+        }
+
+        res.json({
+            success: true,
+            cart: cart
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+
+    }
+
+});
+
+
+// ===============================
 // CREATE SHOPIFY ORDER
 // ===============================
 
@@ -107,30 +158,22 @@ app.post("/create-order", async (req, res) => {
 
         const {
             customer,
-            variantId,
-            quantity,
-            packageName,
+            items,
             playerId,
             region,
             paymentMethod
         } = req.body;
 
 
-        if (!variantId) {
+        if (
+            !items ||
+            !Array.isArray(items) ||
+            items.length === 0
+        ) {
 
             return res.status(400).json({
                 success: false,
-                error: "Variant ID is required."
-            });
-
-        }
-
-
-        if (!quantity || quantity < 1) {
-
-            return res.status(400).json({
-                success: false,
-                error: "Quantity must be at least 1."
+                error: "Cart items are required."
             });
 
         }
@@ -140,10 +183,65 @@ app.post("/create-order", async (req, res) => {
             await getShopifyToken();
 
 
-        const variantGid =
-            String(variantId).startsWith("gid://")
-                ? variantId
-                : `gid://shopify/ProductVariant/${variantId}`;
+        /*
+         * Convert Shopify cart items
+         * into Shopify order line items.
+         */
+
+        const lineItems =
+            items.map(item => {
+
+                const variantId =
+                    item.variant_id ||
+                    item.variantId;
+
+                if (!variantId) {
+                    throw new Error(
+                        "A cart item is missing variant_id."
+                    );
+                }
+
+                const variantGid =
+                    String(variantId).startsWith("gid://")
+                        ? variantId
+                        : `gid://shopify/ProductVariant/${variantId}`;
+
+
+                return {
+
+                    variantId: variantGid,
+
+                    quantity:
+                        Number(item.quantity) || 1,
+
+                    properties: [
+
+                        {
+                            name: "Player ID",
+                            value:
+                                playerId ||
+                                "Not provided"
+                        },
+
+                        {
+                            name: "Region",
+                            value:
+                                region ||
+                                "Not provided"
+                        },
+
+                        {
+                            name: "Payment Method",
+                            value:
+                                paymentMethod ||
+                                "Not provided"
+                        }
+
+                    ]
+
+                };
+
+            });
 
 
         const mutation = `
@@ -169,7 +267,7 @@ app.post("/create-order", async (req, res) => {
                             lastName
                         }
 
-                        lineItems(first: 10) {
+                        lineItems(first: 20) {
 
                             nodes {
 
@@ -194,45 +292,7 @@ app.post("/create-order", async (req, res) => {
 
         const order = {
 
-            lineItems: [
-
-                {
-
-                    variantId: variantGid,
-
-                    quantity: Number(quantity),
-
-                    properties: [
-
-                        {
-                            name: "Package",
-                            value: packageName || "Not provided"
-                        },
-
-                        {
-                            name: "Player ID",
-                            value: playerId || "Not provided"
-                        },
-
-                        {
-                            name: "Region",
-                            value: region || "Not provided"
-                        },
-
-                        {
-                            name: "Payment Method",
-                            value: paymentMethod || "Not provided"
-                        }
-
-                    ]
-
-                }
-
-            ],
-
-            email: customer?.email || undefined,
-
-            phone: customer?.phone || undefined,
+            lineItems: lineItems,
 
             note:
                 "Order created through TopUpMandu Custom Checkout",
@@ -245,12 +305,15 @@ app.post("/create-order", async (req, res) => {
         };
 
 
-        if (!order.email) {
-            delete order.email;
+        if (customer?.email) {
+            order.email =
+                customer.email;
         }
 
-        if (!order.phone) {
-            delete order.phone;
+
+        if (customer?.phone) {
+            order.phone =
+                customer.phone;
         }
 
 
