@@ -20,16 +20,16 @@
         }
 
         .checkout {
-            max-width: 600px;
+            max-width: 650px;
             margin: auto;
             padding: 20px;
         }
 
         .logo {
             text-align: center;
-            font-size: 25px;
-            font-weight: 800;
             color: #2997FF;
+            font-size: 26px;
+            font-weight: 800;
             margin-bottom: 25px;
         }
 
@@ -46,6 +46,45 @@
             margin: 0 0 15px;
         }
 
+        .cart-item {
+            padding: 14px 0;
+            border-bottom: 1px solid #202B3D;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .item-title {
+            font-weight: 700;
+        }
+
+        .item-variant {
+            color: #9CA8BA;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .item-price {
+            color: #2997FF;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .total {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 19px;
+            font-weight: 800;
+        }
+
         label {
             display: block;
             color: #9CA8BA;
@@ -53,8 +92,7 @@
             margin-bottom: 6px;
         }
 
-        input,
-        select {
+        input {
             width: 100%;
             padding: 13px;
             border-radius: 9px;
@@ -65,41 +103,31 @@
             outline: none;
         }
 
-        input:focus,
-        select:focus {
+        input:focus {
             border-color: #1677FF;
         }
 
-        .product {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .product-name {
-            font-weight: 700;
-        }
-
-        .price {
-            color: #2997FF;
-            font-weight: 800;
-        }
-
         .payment-option {
-            padding: 13px;
+            padding: 14px;
             border: 1px solid #202B3D;
             border-radius: 9px;
             margin-bottom: 10px;
             cursor: pointer;
         }
 
-        .payment-option:hover {
-            border-color: #1677FF;
-        }
-
         .payment-option.active {
             border-color: #1677FF;
             background: rgba(22, 119, 255, .12);
+        }
+
+        .payment-instructions {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #070B14;
+            border-radius: 10px;
+            color: #9CA8BA;
+            line-height: 1.6;
         }
 
         button {
@@ -114,21 +142,20 @@
             cursor: pointer;
         }
 
-        button:hover {
-            background: #2997FF;
+        button:disabled {
+            opacity: .6;
+            cursor: not-allowed;
         }
 
-        .notice {
-            color: #9CA8BA;
-            font-size: 12px;
-            line-height: 1.5;
-            margin-top: 10px;
-        }
-
-        #message {
-            margin-top: 15px;
+        .message {
             text-align: center;
-            font-size: 14px;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+
+        .loading {
+            text-align: center;
+            color: #9CA8BA;
         }
     </style>
 </head>
@@ -142,28 +169,21 @@
         </div>
 
 
-        <!-- ORDER -->
+        <!-- CART -->
 
         <div class="card">
 
             <h2>🛒 Your Order</h2>
 
-            <div class="product">
-
-                <div>
-                    <div class="product-name" id="productName">
-                        Free Fire Diamond
-                    </div>
-
-                    <div class="notice">
-                        Package: 260 Diamonds
-                    </div>
+            <div id="cartItems">
+                <div class="loading">
+                    Loading your cart...
                 </div>
+            </div>
 
-                <div class="price">
-                    Rs. 299
-                </div>
-
+            <div class="total">
+                <span>Total</span>
+                <span id="cartTotal">Rs. 0</span>
             </div>
 
         </div>
@@ -175,14 +195,17 @@
 
             <h2>👤 Customer Details</h2>
 
-            <label>Name</label>
-            <input id="customerName" type="text" placeholder="Your full name" required>
+            <label>Full Name</label>
+
+            <input id="customerName" type="text" placeholder="Your full name">
 
             <label>Email</label>
-            <input id="customerEmail" type="email" placeholder="you@example.com" required>
+
+            <input id="customerEmail" type="email" placeholder="you@example.com">
 
             <label>Phone</label>
-            <input id="customerPhone" type="tel" placeholder="98XXXXXXXX" required>
+
+            <input id="customerPhone" type="tel" placeholder="98XXXXXXXX">
 
         </div>
 
@@ -193,13 +216,7 @@
 
             <h2>🎮 Game Details</h2>
 
-            <label>Player ID</label>
-
-            <input id="playerId" type="text" placeholder="Enter your Player ID" required>
-
-            <label>Region</label>
-
-            <input id="region" type="text" placeholder="Enter region">
+            <div id="gameFields"></div>
 
         </div>
 
@@ -210,33 +227,28 @@
 
             <h2>💳 Payment Method</h2>
 
-            <div class="payment-option" onclick="selectPayment('eSewa', this)">
+            <div class="payment-option" data-method="eSewa">
                 🟢 eSewa
             </div>
 
-            <div class="payment-option" onclick="selectPayment('Khalti', this)">
+            <div class="payment-option" data-method="Khalti">
                 🟣 Khalti
             </div>
 
-            <input type="hidden" id="paymentMethod">
-
-            <div class="notice">
-                After selecting your payment method, we will show
-                the payment instructions.
-            </div>
+            <div id="paymentInstructions" class="payment-instructions"></div>
 
         </div>
 
 
-        <!-- SUBMIT -->
+        <!-- PLACE ORDER -->
 
         <div class="card">
 
-            <button onclick="placeOrder()">
+            <button id="placeOrder">
                 Place Order
             </button>
 
-            <div id="message"></div>
+            <div id="message" class="message"></div>
 
         </div>
 
@@ -245,137 +257,546 @@
 
     <script>
 
+        const BACKEND_URL =
+            "https://topupmandu-checkout-app.vercel.app";
+
+
+        let cart = null;
         let selectedPayment = "";
 
 
-        function selectPayment(method, element) {
+        /* ===============================
+           LOAD CART
+        ================================ */
 
-            selectedPayment = method;
+        async function loadCart() {
 
-            document
-                .querySelectorAll(".payment-option")
-                .forEach(option => {
-                    option.classList.remove("active");
-                });
-
-            element.classList.add("active");
-
-            document.getElementById("paymentMethod").value = method;
-
-        }
-
-
-        async function placeOrder() {
-
-            const message =
-                document.getElementById("message");
-
-            const name =
-                document.getElementById("customerName").value.trim();
-
-            const email =
-                document.getElementById("customerEmail").value.trim();
-
-            const phone =
-                document.getElementById("customerPhone").value.trim();
-
-            const playerId =
-                document.getElementById("playerId").value.trim();
-
-            const region =
-                document.getElementById("region").value.trim();
-
-
-            if (!name || !email || !phone || !playerId) {
-
-                message.textContent =
-                    "Please complete all required fields.";
-
-                return;
-            }
-
-
-            if (!selectedPayment) {
-
-                message.textContent =
-                    "Please select a payment method.";
-
-                return;
-            }
-
-
-            message.textContent =
-                "Creating your order...";
-
+            const cartItems =
+                document.getElementById("cartItems");
 
             try {
 
-                const response =
-                    await fetch("/create-order", {
+                /*
+                 * The cart was saved by Shopify
+                 * into sessionStorage before
+                 * redirecting to this page.
+                 */
 
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-
-                        body: JSON.stringify({
-
-                            customer: {
-
-                                name: name,
-                                email: email,
-                                phone: phone
-
-                            },
-
-                            variantId: "48923516371176",
-
-                            quantity: 1,
-
-                            packageName: "260 Diamonds",
-
-                            playerId: playerId,
-
-                            region: region,
-
-                            paymentMethod: selectedPayment
-
-                        })
-
-                    });
+                const savedCart =
+                    sessionStorage.getItem("topupmandu_cart");
 
 
-                const data =
-                    await response.json();
+                if (!savedCart) {
 
-
-                if (!data.success) {
-
-                    message.textContent =
-                        "Order failed: " +
-                        (data.error || "Unknown error");
+                    cartItems.innerHTML = `
+        <div class="loading">
+          Your cart could not be loaded.
+        </div>
+      `;
 
                     return;
 
                 }
 
 
-                message.textContent =
-                    "✅ Order created: " +
-                    data.order.name;
+                cart = JSON.parse(savedCart);
+
+
+                if (!cart.items || cart.items.length === 0) {
+
+                    cartItems.innerHTML = `
+        <div class="loading">
+          Your cart is empty.
+        </div>
+      `;
+
+                    return;
+
+                }
+
+
+                renderCart();
+
+                createGameFields();
 
 
             } catch (error) {
 
                 console.error(error);
 
-                message.textContent =
-                    "Something went wrong.";
+                cartItems.innerHTML = `
+      <div class="loading">
+        Unable to load your cart.
+      </div>
+    `;
 
             }
 
         }
+
+
+        /* ===============================
+           RENDER CART
+        ================================ */
+
+        function renderCart() {
+
+            const container =
+                document.getElementById("cartItems");
+
+
+            container.innerHTML = "";
+
+
+            cart.items.forEach(item => {
+
+                const itemElement =
+                    document.createElement("div");
+
+
+                itemElement.className =
+                    "cart-item";
+
+
+                const price =
+                    ((item.final_line_price || item.line_price) / 100)
+                        .toFixed(2);
+
+
+                itemElement.innerHTML = `
+
+      <div class="item-row">
+
+        <div>
+
+          <div class="item-title">
+            ${escapeHtml(item.product_title)}
+          </div>
+
+          <div class="item-variant">
+
+            ${escapeHtml(item.variant_title || "")}
+
+            × ${item.quantity}
+
+          </div>
+
+        </div>
+
+        <div class="item-price">
+          Rs. ${price}
+        </div>
+
+      </div>
+
+    `;
+
+
+                container.appendChild(itemElement);
+
+            });
+
+
+            const total =
+                (cart.total_price / 100).toFixed(2);
+
+
+            document.getElementById("cartTotal")
+                .textContent =
+                `Rs. ${total}`;
+
+        }
+
+
+        /* ===============================
+           GAME FIELDS
+        ================================ */
+
+        function createGameFields() {
+
+            const container =
+                document.getElementById("gameFields");
+
+
+            container.innerHTML = "";
+
+
+            const hasFreeFire =
+                cart.items.some(item =>
+                    item.handle === "free-fire-diamonds"
+                );
+
+
+            const hasMobileLegends =
+                cart.items.some(item =>
+                    item.handle === "mobile-legends"
+                );
+
+
+            const productsNeedPlayerId = [
+                "free-fire-diamonds",
+                "pubg-uc",
+                "clash-of-clans",
+                "valorant-ios-only",
+                "efootball-pes-2026",
+                "genshin-impact",
+                "brawl-stars",
+                "roblox",
+                "mobile-legends"
+            ];
+
+
+            const needsPlayerId =
+                cart.items.some(item =>
+                    productsNeedPlayerId.includes(item.handle)
+                );
+
+
+            if (needsPlayerId) {
+
+                container.innerHTML += `
+
+      <label>Player ID / UID</label>
+
+      <input
+        id="playerId"
+        type="text"
+        placeholder="Enter Player ID"
+      >
+
+    `;
+
+            }
+
+
+            if (hasMobileLegends) {
+
+                container.innerHTML += `
+
+      <label>Region</label>
+
+      <input
+        id="region"
+        type="text"
+        placeholder="Enter Region"
+      >
+
+    `;
+
+            }
+
+        }
+
+
+        /* ===============================
+           PAYMENT
+        ================================ */
+
+        document
+            .querySelectorAll(".payment-option")
+            .forEach(option => {
+
+                option.addEventListener("click", () => {
+
+                    selectedPayment =
+                        option.dataset.method;
+
+
+                    document
+                        .querySelectorAll(".payment-option")
+                        .forEach(item =>
+                            item.classList.remove("active")
+                        );
+
+
+                    option.classList.add("active");
+
+
+                    const instructions =
+                        document.getElementById(
+                            "paymentInstructions"
+                        );
+
+
+                    instructions.style.display =
+                        "block";
+
+
+                    if (selectedPayment === "eSewa") {
+
+                        instructions.innerHTML = `
+
+          <strong>eSewa Payment</strong><br><br>
+
+          1. Open eSewa.<br>
+
+          2. Send the exact order amount
+             to the TopUpMandu eSewa account.<br>
+
+          3. Keep your payment receipt.<br>
+
+          4. Submit the order below.
+
+        `;
+
+                    }
+
+
+                    if (selectedPayment === "Khalti") {
+
+                        instructions.innerHTML = `
+
+          <strong>Khalti Payment</strong><br><br>
+
+          1. Open Khalti.<br>
+
+          2. Send the exact order amount
+             to the TopUpMandu Khalti account.<br>
+
+          3. Keep your payment receipt.<br>
+
+          4. Submit the order below.
+
+        `;
+
+                    }
+
+                });
+
+            });
+
+
+        /* ===============================
+           PLACE ORDER
+        ================================ */
+
+        document
+            .getElementById("placeOrder")
+            .addEventListener("click", async () => {
+
+                const message =
+                    document.getElementById("message");
+
+
+                if (!cart || !cart.items?.length) {
+
+                    message.textContent =
+                        "Your cart is empty.";
+
+                    return;
+
+                }
+
+
+                const name =
+                    document
+                        .getElementById("customerName")
+                        .value
+                        .trim();
+
+
+                const email =
+                    document
+                        .getElementById("customerEmail")
+                        .value
+                        .trim();
+
+
+                const phone =
+                    document
+                        .getElementById("customerPhone")
+                        .value
+                        .trim();
+
+
+                const playerInput =
+                    document.getElementById("playerId");
+
+
+                const regionInput =
+                    document.getElementById("region");
+
+
+                const playerId =
+                    playerInput
+                        ? playerInput.value.trim()
+                        : "";
+
+
+                const region =
+                    regionInput
+                        ? regionInput.value.trim()
+                        : "";
+
+
+                if (!name || !email || !phone) {
+
+                    message.textContent =
+                        "Please complete your customer details.";
+
+                    return;
+
+                }
+
+
+                if (!selectedPayment) {
+
+                    message.textContent =
+                        "Please select a payment method.";
+
+                    return;
+
+                }
+
+
+                document
+                    .getElementById("placeOrder")
+                    .disabled = true;
+
+
+                message.textContent =
+                    "Creating your order...";
+
+
+                try {
+
+                    /*
+                     * For now we send the first cart
+                     * item to our backend.
+                     *
+                     * We will upgrade this next so
+                     * multiple cart items are supported.
+                     */
+
+                    const firstItem =
+                        cart.items[0];
+
+
+                    const response =
+                        await fetch(
+                            `${BACKEND_URL}/create-order`,
+                            {
+
+                                method: "POST",
+
+                                headers: {
+
+                                    "Content-Type":
+                                        "application/json"
+
+                                },
+
+                                body: JSON.stringify({
+
+                                    customer: {
+
+                                        name,
+                                        email,
+                                        phone
+
+                                    },
+
+                                    variantId:
+                                        firstItem.variant_id,
+
+                                    quantity:
+                                        firstItem.quantity,
+
+                                    packageName:
+                                        firstItem.variant_title ||
+                                        firstItem.product_title,
+
+                                    playerId,
+
+                                    region,
+
+                                    paymentMethod:
+                                        selectedPayment
+
+                                })
+
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!data.success) {
+
+                        throw new Error(
+                            data.error ||
+                            "Order creation failed."
+                        );
+
+                    }
+
+
+                    message.innerHTML = `
+
+        <strong>
+          ✅ Order created successfully!
+        </strong>
+
+        <br><br>
+
+        Order:
+        ${escapeHtml(data.order.name)}
+
+      `;
+
+
+                    /*
+                     * Prevent duplicate order submission.
+                     */
+
+                    sessionStorage.removeItem(
+                        "topupmandu_cart"
+                    );
+
+
+                } catch (error) {
+
+                    console.error(error);
+
+
+                    message.textContent =
+                        "Order failed: " +
+                        error.message;
+
+
+                    document
+                        .getElementById("placeOrder")
+                        .disabled = false;
+
+                }
+
+            });
+
+
+        /* ===============================
+           HTML ESCAPE
+        ================================ */
+
+        function escapeHtml(value) {
+
+            const div =
+                document.createElement("div");
+
+            div.textContent =
+                value || "";
+
+            return div.innerHTML;
+
+        }
+
+
+        /* ===============================
+           START
+        ================================ */
+
+        loadCart();
 
     </script>
 
