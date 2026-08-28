@@ -321,22 +321,19 @@
 
         </div>
 
-
         <!-- GAME DETAILS -->
 
-        <div class="card">
+        <div class="card" id="game-details-card" style="display:none;">
 
             <h2>
                 🎮 Game Details
             </h2>
-
 
             <label for="player-id">
                 Player ID / UID
             </label>
 
             <input type="text" id="player-id" placeholder="Enter your Player ID / UID">
-
 
             <label for="region">
                 Region
@@ -345,7 +342,6 @@
             <input type="text" id="region" placeholder="Enter region if required">
 
         </div>
-
 
         <!-- PAYMENT -->
 
@@ -557,15 +553,13 @@
         function displayCart(cart) {
 
             const container =
-                document.getElementById(
-                    "cart-items"
-                );
-
+                document.getElementById("cart-items");
 
             const total =
-                document.getElementById(
-                    "cart-total"
-                );
+                document.getElementById("cart-total");
+
+            const gameDetailsCard =
+                document.getElementById("game-details-card");
 
 
             if (
@@ -575,139 +569,224 @@
             ) {
 
                 container.innerHTML = `
-                    <div class="empty">
-                        Your cart is empty.
-                    </div>
-                `;
+            <div class="empty">
+                Your cart is empty.
+            </div>
+        `;
 
+                total.textContent = "Rs. 0";
 
-                total.textContent =
-                    "Rs. 0";
-
+                if (gameDetailsCard) {
+                    gameDetailsCard.style.display = "none";
+                }
 
                 return;
-
             }
 
 
             let html = "";
 
 
-            cart.items.forEach(
-                function (item) {
+            cart.items.forEach(function (item) {
 
-                    const image =
-                        item.image
-                            ? `
-                                <img
-                                    class="product-image"
-                                    src="${escapeHTML(item.image)}"
-                                    alt="${escapeHTML(
-                                item.title ||
-                                "Product"
-                            )}"
-                                >
-                              `
-                            : "";
-
-
-                    const title =
-                        item.title ||
-                        item.product_title ||
-                        "Product";
+                const image =
+                    item.image
+                        ? `
+                    <img
+                        class="product-image"
+                        src="${escapeHTML(item.image)}"
+                        alt="${escapeHTML(
+                            item.title ||
+                            "Product"
+                        )}"
+                    >
+                  `
+                        : "";
 
 
-                    const variant =
-                        item.variant_title &&
-                            item.variant_title !== "Default Title"
-                            ? item.variant_title
-                            : "";
+                const title =
+                    item.title ||
+                    item.product_title ||
+                    "Product";
 
 
-                    const linePrice =
-                        item.final_line_price ||
-                        item.line_price ||
-                        (
-                            Number(
-                                item.final_price ||
-                                item.price ||
-                                0
-                            ) *
-                            Number(
-                                item.quantity ||
-                                1
-                            )
-                        );
+                const variant =
+                    item.variant_title &&
+                        item.variant_title !== "Default Title"
+                        ? item.variant_title
+                        : "";
 
 
-                    html += `
-
-                        <div class="product">
-
-                            <div class="product-left">
-
-                                ${image}
-
-                                <div>
-
-                                    <div class="product-name">
-
-                                        ${escapeHTML(
-                        title
-                    )}
-
-                                    </div>
-
-                                    <div class="product-info">
-
-                                        ${variant
-                            ? escapeHTML(
-                                variant
-                            ) +
-                            " · "
-                            : ""
-                        }
-
-                                        Quantity:
-                                        ${escapeHTML(
+                const linePrice =
+                    item.final_line_price ||
+                    item.line_price ||
+                    (
+                        Number(
+                            item.final_price ||
+                            item.price ||
+                            0
+                        ) *
+                        Number(
                             item.quantity ||
                             1
-                        )}
-
-                                    </div>
-
-                                </div>
-
-                            </div>
+                        )
+                    );
 
 
-                            <div class="product-price">
+                html += `
 
-                                ${formatMoney(
-                            linePrice
-                        )}
+            <div class="product">
 
-                            </div>
+                <div class="product-left">
+
+                    ${image}
+
+                    <div>
+
+                        <div class="product-name">
+
+                            ${escapeHTML(title)}
 
                         </div>
 
-                    `;
+                        <div class="product-info">
 
-                }
-            );
+                            ${variant
+                        ? escapeHTML(variant) + " · "
+                        : ""
+                    }
+
+                            Quantity:
+                            ${escapeHTML(
+                        item.quantity || 1
+                    )}
+
+                        </div>
+
+                    </div>
+
+                </div>
 
 
-            container.innerHTML =
-                html;
+                <div class="product-price">
 
+                    ${formatMoney(linePrice)}
+
+                </div>
+
+            </div>
+
+        `;
+
+            });
+
+
+            container.innerHTML = html;
 
             total.textContent =
-                formatMoney(
-                    cart.total_price
-                );
+                formatMoney(cart.total_price);
+
+
+            /* ==========================================
+               SHOW GAME DETAILS ONLY FOR GAME PRODUCTS
+               ========================================== */
+
+            if (gameDetailsCard) {
+
+                const gameProductTitles = [
+                    "Free Fire",
+                    "Free Fire Diamond",
+                    "PUBG",
+                    "PUBG UC",
+                    "Clash of Clans",
+                    "Valorant",
+                    "eFootball",
+                    "Genshin Impact",
+                    "Brawl Stars",
+                    "Roblox",
+                    "Mobile Legends"
+                ];
+
+                const hasGameProduct = cart.items.some(function (item) {
+
+                    const productTitle =
+                        (
+                            item.title ||
+                            item.product_title ||
+                            ""
+                        ).toLowerCase();
+
+                    return gameProductTitles.some(function (game) {
+                        return productTitle.includes(
+                            game.toLowerCase()
+                        );
+                    });
+
+                });
+
+
+                if (hasGameProduct) {
+
+                    gameDetailsCard.style.display = "block";
+
+                } else {
+
+                    gameDetailsCard.style.display = "none";
+
+                }
+
+            }
+
+            /*
+             * =====================================
+             * GAME PRODUCT DETECTION
+             * =====================================
+             */
+
+            const gameProductHandles = [
+
+                "free-fire-diamonds",
+                "pubg-uc",
+                "clash-of-clans",
+                "valorant-ios-only",
+                "efootball-pes-2026",
+                "genshin-impact",
+                "brawl-stars",
+                "roblox",
+                "mobile-legends"
+
+            ];
+
+
+            /*
+             * Check if cart contains a game product.
+             */
+
+            const hasGameProduct =
+                cart.items.some(function (item) {
+
+                    return gameProductHandles.includes(
+                        item.handle
+                    );
+
+                });
+
+
+            /*
+             * Show Game Details only
+             * when a game product exists.
+             */
+
+            if (gameDetailsCard) {
+
+                gameDetailsCard.style.display =
+                    hasGameProduct
+                        ? "block"
+                        : "none";
+
+            }
 
         }
-
 
         /*
          * ==========================================
