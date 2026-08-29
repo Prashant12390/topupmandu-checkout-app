@@ -1889,16 +1889,25 @@
                         );
 
 
-                        if (
-                            !response.ok ||
-                            !result.success
-                        ) {
+                        if (!response.ok || !result.success) {
 
-                            throw new Error(
-                                result.error ||
-                                "Order creation failed."
-                            );
+                            let message = "Order creation failed.";
 
+                            if (result.error) {
+                                message = result.error;
+                            }
+
+                            if (result.errors) {
+                                if (Array.isArray(result.errors)) {
+                                    message = result.errors
+                                        .map(e => e.message || JSON.stringify(e))
+                                        .join("\n");
+                                } else {
+                                    message = JSON.stringify(result.errors);
+                                }
+                            }
+
+                            throw new Error(message);
                         }
 
 
