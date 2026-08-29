@@ -5,9 +5,10 @@ const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 
 const app = express();
-// ========================================
-// CLOUDINARY
-// ========================================
+
+/* =========================================================
+   CLOUDINARY
+========================================================= */
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -16,11 +17,12 @@ cloudinary.config({
 });
 
 
-// ========================================
-// PAYMENT SCREENSHOT UPLOAD
-// ========================================
+/* =========================================================
+   MULTER - PAYMENT SCREENSHOT
+========================================================= */
 
 const upload = multer({
+
     storage: multer.memoryStorage(),
 
     limits: {
@@ -29,30 +31,50 @@ const upload = multer({
 
     fileFilter: (req, file, cb) => {
 
-        if (
-            file.mimetype === "image/jpeg" ||
-            file.mimetype === "image/png" ||
-            file.mimetype === "image/webp"
-        ) {
+        const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+        ];
+
+        if (allowedTypes.includes(file.mimetype)) {
+
             cb(null, true);
+
         } else {
+
             cb(
                 new Error(
                     "Only JPG, PNG and WEBP images are allowed."
                 )
             );
+
         }
 
     }
+
 });
 
-app.use(express.json({ limit: "1mb" }));
+
+/* =========================================================
+   BODY PARSERS
+========================================================= */
+
+app.use(express.json({
+    limit: "2mb"
+}));
+
+app.use(express.urlencoded({
+    extended: true,
+    limit: "2mb"
+}));
+
 app.use(express.static(__dirname));
 
 
-// ========================================
-// ENVIRONMENT VARIABLES
-// ========================================
+/* =========================================================
+   SHOPIFY ENVIRONMENT VARIABLES
+========================================================= */
 
 const SHOPIFY_SHOP =
     process.env.SHOPIFY_SHOP;
@@ -64,36 +86,16 @@ const SHOPIFY_CLIENT_SECRET =
     process.env.SHOPIFY_CLIENT_SECRET;
 
 
-// ========================================
-// CLOUDINARY
-// ========================================
-
-cloudinary.config({
-
-    cloud_name:
-        process.env.CLOUDINARY_CLOUD_NAME,
-
-    api_key:
-        process.env.CLOUDINARY_API_KEY,
-
-    api_secret:
-        process.env.CLOUDINARY_API_SECRET
-
-});
-
-
-
-
-// ========================================
-// TEMPORARY CART STORAGE
-// ========================================
+/* =========================================================
+   TEMPORARY CART STORAGE
+========================================================= */
 
 const carts = new Map();
 
 
-// ========================================
-// HOME
-// ========================================
+/* =========================================================
+   HOME
+========================================================= */
 
 app.get("/", (req, res) => {
 
@@ -104,9 +106,9 @@ app.get("/", (req, res) => {
 });
 
 
-// ========================================
-// CHECKOUT PAGE
-// ========================================
+/* =========================================================
+   CHECKOUT PAGE
+========================================================= */
 
 app.get("/checkout", (req, res) => {
 
@@ -120,9 +122,9 @@ app.get("/checkout", (req, res) => {
 });
 
 
-// ========================================
-// SHOPIFY TOKEN
-// ========================================
+/* =========================================================
+   SHOPIFY TOKEN
+========================================================= */
 
 async function getShopifyToken() {
 
@@ -139,40 +141,34 @@ async function getShopifyToken() {
     }
 
 
-    const response =
-        await fetch(
+    const response = await fetch(
 
-            `https://${SHOPIFY_SHOP}.myshopify.com/admin/oauth/access_token`,
+        `https://${SHOPIFY_SHOP}.myshopify.com/admin/oauth/access_token`,
 
-            {
+        {
 
-                method:
-                    "POST",
+            method: "POST",
 
-                headers: {
+            headers: {
+                "Content-Type": "application/json"
+            },
 
-                    "Content-Type":
-                        "application/json"
+            body: JSON.stringify({
 
-                },
+                client_id:
+                    SHOPIFY_CLIENT_ID,
 
-                body:
-                    JSON.stringify({
+                client_secret:
+                    SHOPIFY_CLIENT_SECRET,
 
-                        client_id:
-                            SHOPIFY_CLIENT_ID,
+                grant_type:
+                    "client_credentials"
 
-                        client_secret:
-                            SHOPIFY_CLIENT_SECRET,
+            })
 
-                        grant_type:
-                            "client_credentials"
+        }
 
-                    })
-
-            }
-
-        );
+    );
 
 
     const data =
@@ -197,9 +193,9 @@ async function getShopifyToken() {
 }
 
 
-// ========================================
-// TEST SHOPIFY
-// ========================================
+/* =========================================================
+   TEST SHOPIFY
+========================================================= */
 
 app.get(
     "/test-shopify",
@@ -211,8 +207,7 @@ app.get(
 
             res.json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     "Successfully connected to Shopify!"
@@ -221,12 +216,14 @@ app.get(
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "TEST SHOPIFY ERROR:",
+                error
+            );
 
             res.status(500).json({
 
-                success:
-                    false,
+                success: false,
 
                 error:
                     error.message
@@ -239,9 +236,9 @@ app.get(
 );
 
 
-// ========================================
-// SAVE CART
-// ========================================
+/* =========================================================
+   SAVE CART
+========================================================= */
 
 app.post(
     "/cart",
@@ -260,8 +257,7 @@ app.post(
 
                 return res.status(400).json({
 
-                    success:
-                        false,
+                    success: false,
 
                     error:
                         "Invalid cart data."
@@ -277,8 +273,7 @@ app.post(
 
                 return res.status(400).json({
 
-                    success:
-                        false,
+                    success: false,
 
                     error:
                         "Cart is empty."
@@ -298,8 +293,7 @@ app.post(
 
                 {
 
-                    cart:
-                        cart,
+                    cart: cart,
 
                     createdAt:
                         Date.now()
@@ -308,6 +302,8 @@ app.post(
 
             );
 
+
+            /* Remove carts older than 30 minutes */
 
             for (
                 const [
@@ -332,8 +328,7 @@ app.post(
 
             res.json({
 
-                success:
-                    true,
+                success: true,
 
                 cartId:
                     cartId
@@ -343,12 +338,14 @@ app.post(
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "SAVE CART ERROR:",
+                error
+            );
 
             res.status(500).json({
 
-                success:
-                    false,
+                success: false,
 
                 error:
                     error.message
@@ -361,9 +358,9 @@ app.post(
 );
 
 
-// ========================================
-// GET CART
-// ========================================
+/* =========================================================
+   GET CART
+========================================================= */
 
 app.get(
     "/cart/:cartId",
@@ -381,8 +378,7 @@ app.get(
 
                 return res.status(404).json({
 
-                    success:
-                        false,
+                    success: false,
 
                     error:
                         "Cart not found or expired."
@@ -405,8 +401,7 @@ app.get(
 
                 return res.status(404).json({
 
-                    success:
-                        false,
+                    success: false,
 
                     error:
                         "Cart has expired."
@@ -418,8 +413,7 @@ app.get(
 
             res.json({
 
-                success:
-                    true,
+                success: true,
 
                 cart:
                     stored.cart
@@ -429,87 +423,8 @@ app.get(
 
         } catch (error) {
 
-            console.error(error);
-
-            res.status(500).json({
-
-                success:
-                    false,
-
-                error:
-                    error.message
-
-            });
-
-        }
-
-    }
-);
-// ========================================
-// UPLOAD PAYMENT SCREENSHOT
-// ========================================
-
-app.post(
-    "/upload-payment-screenshot",
-    upload.single("paymentScreenshot"),
-    async (req, res) => {
-
-        try {
-
-            if (!req.file) {
-
-                return res.status(400).json({
-                    success: false,
-                    error: "Payment screenshot is required."
-                });
-
-            }
-
-            const uploadResult =
-                await new Promise((resolve, reject) => {
-
-                    const stream =
-                        cloudinary.uploader.upload_stream(
-                            {
-                                folder:
-                                    "topupmandu/payment-screenshots",
-
-                                resource_type:
-                                    "image"
-                            },
-
-                            (error, result) => {
-
-                                if (error) {
-                                    reject(error);
-                                } else {
-                                    resolve(result);
-                                }
-
-                            }
-                        );
-
-                    stream.end(
-                        req.file.buffer
-                    );
-
-                });
-
-
-            res.json({
-
-                success: true,
-
-                screenshotUrl:
-                    uploadResult.secure_url
-
-            });
-
-
-        } catch (error) {
-
             console.error(
-                "Screenshot upload error:",
+                "GET CART ERROR:",
                 error
             );
 
@@ -527,30 +442,200 @@ app.post(
     }
 );
 
-// ========================================
-// CREATE SHOPIFY ORDER
-// ========================================
+
+/* =========================================================
+   UPLOAD PAYMENT SCREENSHOT
+========================================================= */
 
 app.post(
-    "/create-order",
+    "/upload-payment-screenshot",
+    upload.single("paymentScreenshot"),
     async (req, res) => {
 
         try {
 
-            const {
-                customer,
-                items,
-                playerId,
-                region,
-                paymentMethod,
-                paymentScreenshot
-            } = req.body;
+            if (!req.file) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Payment screenshot is required."
+
+                });
+
+            }
+
+
+            const uploadResult =
+                await new Promise(
+                    (resolve, reject) => {
+
+                        const stream =
+                            cloudinary
+                                .uploader
+                                .upload_stream(
+
+                                    {
+
+                                        folder:
+                                            "topupmandu/payment-screenshots",
+
+                                        resource_type:
+                                            "image"
+
+                                    },
+
+                                    (
+                                        error,
+                                        result
+                                    ) => {
+
+                                        if (error) {
+
+                                            reject(error);
+
+                                        } else {
+
+                                            resolve(result);
+
+                                        }
+
+                                    }
+
+                                );
+
+
+                        stream.end(
+                            req.file.buffer
+                        );
+
+                    }
+                );
+
+
+            res.json({
+
+                success: true,
+
+                screenshotUrl:
+                    uploadResult.secure_url
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "SCREENSHOT UPLOAD ERROR:",
+                error
+            );
+
+
+            res.status(500).json({
+
+                success: false,
+
+                error:
+                    error.message
+
+            });
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   CREATE SHOPIFY ORDER
+========================================================= */
+
+/*
+ IMPORTANT:
+ upload.single("paymentScreenshot") is placed here.
+
+ This allows the route to receive:
+
+ - normal JSON requests
+ - FormData requests
+ - paymentScreenshot files
+*/
+
+app.post(
+    "/create-order",
+    upload.single("paymentScreenshot"),
+    async (req, res) => {
+
+        try {
+
+            console.log(
+                "CREATE ORDER REQUEST RECEIVED"
+            );
+
+            console.log(
+                "Content-Type:",
+                req.headers["content-type"]
+            );
+
+            console.log(
+                "Body:",
+                req.body
+            );
+
+            console.log(
+                "File:",
+                req.file
+                    ? req.file.originalname
+                    : "No screenshot"
+            );
 
 
             /*
-             * Parse customer and items
-             * because FormData sends strings.
+             * SAFETY CHECK
              */
+
+            if (!req.body) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Request body is missing."
+
+                });
+
+            }
+
+
+            /* =================================================
+               READ REQUEST DATA
+            ================================================= */
+
+            let customer =
+                req.body.customer;
+
+            let items =
+                req.body.items;
+
+            const playerId =
+                req.body.playerId || "";
+
+            const region =
+                req.body.region || "";
+
+            const paymentMethod =
+                req.body.paymentMethod || "";
+
+            const paymentScreenshot =
+                req.body.paymentScreenshot || "";
+
+
+            /* =================================================
+               PARSE FORM DATA STRINGS
+            ================================================= */
 
             let parsedCustomer =
                 customer;
@@ -582,12 +667,17 @@ app.post(
 
                 }
 
-            } catch (error) {
+            } catch (parseError) {
+
+                console.error(
+                    "JSON PARSE ERROR:",
+                    parseError
+                );
+
 
                 return res.status(400).json({
 
-                    success:
-                        false,
+                    success: false,
 
                     error:
                         "Invalid customer or cart data."
@@ -597,6 +687,32 @@ app.post(
             }
 
 
+            /* =================================================
+               VALIDATE CUSTOMER
+            ================================================= */
+
+            if (
+                !parsedCustomer ||
+                typeof parsedCustomer !==
+                "object"
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Customer information is required."
+
+                });
+
+            }
+
+
+            /* =================================================
+               VALIDATE ITEMS
+            ================================================= */
+
             if (
                 !parsedItems ||
                 !Array.isArray(parsedItems) ||
@@ -605,8 +721,7 @@ app.post(
 
                 return res.status(400).json({
 
-                    success:
-                        false,
+                    success: false,
 
                     error:
                         "Cart items are required."
@@ -616,9 +731,9 @@ app.post(
             }
 
 
-            // ========================================
-            // UPLOAD PAYMENT SCREENSHOT
-            // ========================================
+            /* =================================================
+               UPLOAD SCREENSHOT TO CLOUDINARY
+            ================================================= */
 
             let screenshotUrl =
                 "";
@@ -626,43 +741,52 @@ app.post(
 
             if (req.file) {
 
+                console.log(
+                    "Uploading screenshot to Cloudinary..."
+                );
+
+
                 screenshotUrl =
                     await new Promise(
                         (resolve, reject) => {
 
                             const stream =
-                                cloudinary.uploader.upload_stream(
+                                cloudinary
+                                    .uploader
+                                    .upload_stream(
 
-                                    {
+                                        {
 
-                                        folder:
-                                            "topupmandu/payment-screenshots",
+                                            folder:
+                                                "topupmandu/payment-screenshots",
 
-                                        resource_type:
-                                            "image"
+                                            resource_type:
+                                                "image"
 
-                                    },
+                                        },
 
-                                    (
-                                        error,
-                                        result
-                                    ) => {
+                                        (
+                                            error,
+                                            result
+                                        ) => {
 
-                                        if (error) {
+                                            if (error) {
 
-                                            reject(error);
+                                                reject(
+                                                    error
+                                                );
 
-                                        } else {
+                                            } else {
 
-                                            resolve(
-                                                result.secure_url
-                                            );
+                                                resolve(
+                                                    result.secure_url
+                                                );
+
+                                            }
 
                                         }
 
-                                    }
-
-                                );
+                                    );
 
 
                             stream.end(
@@ -672,20 +796,42 @@ app.post(
                         }
                     );
 
+
+                console.log(
+                    "Screenshot uploaded:",
+                    screenshotUrl
+                );
+
             }
 
 
-            // ========================================
-            // SHOPIFY TOKEN
-            // ========================================
+            /*
+             * If frontend sends screenshot URL instead
+             * of uploading directly, use it.
+             */
+
+            if (
+                !screenshotUrl &&
+                paymentScreenshot
+            ) {
+
+                screenshotUrl =
+                    paymentScreenshot;
+
+            }
+
+
+            /* =================================================
+               SHOPIFY TOKEN
+            ================================================= */
 
             const accessToken =
                 await getShopifyToken();
 
 
-            // ========================================
-            // SHOPIFY LINE ITEMS
-            // ========================================
+            /* =================================================
+               SHOPIFY LINE ITEMS
+            ================================================= */
 
             const lineItems =
                 parsedItems.map(
@@ -693,7 +839,8 @@ app.post(
 
                         const variantId =
                             item.variant_id ||
-                            item.variantId;
+                            item.variantId ||
+                            item.variant_id;
 
 
                         if (!variantId) {
@@ -712,9 +859,77 @@ app.post(
                                 "gid://"
                             )
 
-                                ? variantId
+                                ? String(
+                                    variantId
+                                )
 
                                 : `gid://shopify/ProductVariant/${variantId}`;
+
+
+                        const properties = [];
+
+
+                        /*
+                         * PLAYER ID
+                         */
+
+                        if (playerId) {
+
+                            properties.push({
+
+                                name:
+                                    "Player ID",
+
+                                value:
+                                    String(
+                                        playerId
+                                    )
+
+                            });
+
+                        }
+
+
+                        /*
+                         * REGION
+                         */
+
+                        if (region) {
+
+                            properties.push({
+
+                                name:
+                                    "Region",
+
+                                value:
+                                    String(
+                                        region
+                                    )
+
+                            });
+
+                        }
+
+
+                        /*
+                         * PAYMENT METHOD
+                         */
+
+                        if (paymentMethod) {
+
+                            properties.push({
+
+                                name:
+                                    "Payment Method",
+
+                                value:
+                                    String(
+                                        paymentMethod
+                                    )
+
+                            });
+
+                        }
 
 
                         return {
@@ -727,42 +942,8 @@ app.post(
                                     item.quantity
                                 ) || 1,
 
-                            properties: [
-
-                                {
-
-                                    name:
-                                        "Player ID",
-
-                                    value:
-                                        playerId ||
-                                        "Not provided"
-
-                                },
-
-                                {
-
-                                    name:
-                                        "Region",
-
-                                    value:
-                                        region ||
-                                        "Not provided"
-
-                                },
-
-                                {
-
-                                    name:
-                                        "Payment Method",
-
-                                    value:
-                                        paymentMethod ||
-                                        "Not provided"
-
-                                }
-
-                            ]
+                            properties:
+                                properties
 
                         };
 
@@ -770,9 +951,9 @@ app.post(
                 );
 
 
-            // ========================================
-            // SHOPIFY ORDER
-            // ========================================
+            /* =================================================
+               SHOPIFY ORDER MUTATION
+            ================================================= */
 
             const mutation = `
 
@@ -809,6 +990,10 @@ app.post(
             `;
 
 
+            /* =================================================
+               CREATE ORDER OBJECT
+            ================================================= */
+
             const order = {
 
                 lineItems:
@@ -818,56 +1003,146 @@ app.post(
                     "Order created through TopUpMandu Custom Checkout",
 
                 tags: [
+
                     "TopUpMandu",
+
                     "Custom Checkout"
+
                 ]
 
             };
 
 
-            // ========================================
-            // PAYMENT SCREENSHOT
-            // ========================================
-
-            if (paymentScreenshot) {
-
-                order.note +=
-                    "\nPayment Screenshot: " +
-                    paymentScreenshot;
-
-            }
-
-
-            // ========================================
-            // CUSTOMER INFORMATION
-            // ========================================
+            /* =================================================
+               CUSTOMER EMAIL
+            ================================================= */
 
             if (
-                parsedCustomer?.email
+                parsedCustomer.email
             ) {
 
                 order.email =
-                    parsedCustomer.email;
+                    String(
+                        parsedCustomer.email
+                    );
 
             }
 
 
+            /* =================================================
+               CUSTOMER PHONE
+            ================================================= */
+
             if (
-                parsedCustomer?.phone
+                parsedCustomer.phone
             ) {
 
                 order.phone =
-                    parsedCustomer.phone;
+                    String(
+                        parsedCustomer.phone
+                    );
 
             }
 
 
-            // ========================================
-            // ORDER CUSTOM ATTRIBUTES
-            // ========================================
+            /* =================================================
+               CUSTOMER NAME IN NOTE
+            ================================================= */
+
+            if (
+                parsedCustomer.name
+            ) {
+
+                order.note +=
+                    "\nCustomer Name: " +
+                    String(
+                        parsedCustomer.name
+                    );
+
+            }
+
+
+            /* =================================================
+               PAYMENT SCREENSHOT
+            ================================================= */
+
+            if (screenshotUrl) {
+
+                order.note +=
+                    "\nPayment Screenshot: " +
+                    screenshotUrl;
+
+            }
+
+
+            /* =================================================
+               ORDER CUSTOM ATTRIBUTES
+            ================================================= */
 
             const attributes = [];
 
+
+            /*
+             * PAYMENT METHOD
+             */
+
+            attributes.push({
+
+                key:
+                    "Payment Method",
+
+                value:
+                    paymentMethod ||
+                    "Not provided"
+
+            });
+
+
+            /*
+             * PLAYER ID
+             */
+
+            if (playerId) {
+
+                attributes.push({
+
+                    key:
+                        "Player ID",
+
+                    value:
+                        String(
+                            playerId
+                        )
+
+                });
+
+            }
+
+
+            /*
+             * REGION
+             */
+
+            if (region) {
+
+                attributes.push({
+
+                    key:
+                        "Region",
+
+                    value:
+                        String(
+                            region
+                        )
+
+                });
+
+            }
+
+
+            /*
+             * PAYMENT SCREENSHOT
+             */
 
             if (screenshotUrl) {
 
@@ -884,55 +1159,18 @@ app.post(
             }
 
 
-            attributes.push({
-
-                key:
-                    "Payment Method",
-
-                value:
-                    paymentMethod ||
-                    "Not provided"
-
-            });
-
-
-            if (playerId) {
-
-                attributes.push({
-
-                    key:
-                        "Player ID",
-
-                    value:
-                        playerId
-
-                });
-
-            }
-
-
-            if (region) {
-
-                attributes.push({
-
-                    key:
-                        "Region",
-
-                    value:
-                        region
-
-                });
-
-            }
-
-
             order.customAttributes =
                 attributes;
 
 
-            // ========================================
-            // SEND TO SHOPIFY
-            // ========================================
+            /* =================================================
+               SEND ORDER TO SHOPIFY
+            ================================================= */
+
+            console.log(
+                "Sending order to Shopify..."
+            );
+
 
             const response =
                 await fetch(
@@ -979,7 +1217,7 @@ app.post(
 
 
             console.log(
-                "Shopify response:",
+                "SHOPIFY RESPONSE:",
                 JSON.stringify(
                     result,
                     null,
@@ -988,12 +1226,15 @@ app.post(
             );
 
 
+            /* =================================================
+               GRAPHQL ERROR
+            ================================================= */
+
             if (result.errors) {
 
                 return res.status(500).json({
 
-                    success:
-                        false,
+                    success: false,
 
                     error:
                         result.errors
@@ -1003,46 +1244,70 @@ app.post(
             }
 
 
+            /* =================================================
+               ORDER RESULT
+            ================================================= */
+
             const orderResult =
                 result.data?.orderCreate;
 
 
             if (
-                !orderResult ||
-                orderResult.userErrors?.length
+                !orderResult
             ) {
 
-                return res.status(400).json({
+                return res.status(500).json({
 
-                    success:
-                        false,
+                    success: false,
 
-                    errors:
-                        orderResult?.userErrors ||
-                        [
-
-                            {
-
-                                message:
-                                    "Shopify order creation failed."
-
-                            }
-
-                        ]
+                    error:
+                        "Shopify did not return an order result."
 
                 });
 
             }
 
 
-            // ========================================
-            // SUCCESS
-            // ========================================
+            /* =================================================
+               SHOPIFY USER ERRORS
+            ================================================= */
+
+            if (
+                orderResult.userErrors &&
+                orderResult.userErrors.length > 0
+            ) {
+
+                console.error(
+                    "SHOPIFY USER ERRORS:",
+                    orderResult.userErrors
+                );
+
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    errors:
+                        orderResult.userErrors
+
+                });
+
+            }
+
+
+            /* =================================================
+               SUCCESS
+            ================================================= */
+
+            console.log(
+                "ORDER CREATED:",
+                orderResult.order
+            );
+
 
             res.json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     "Order created successfully!",
@@ -1059,18 +1324,27 @@ app.post(
         } catch (error) {
 
             console.error(
-                "CREATE ORDER ERROR:",
-                error
+                "===================================="
+            );
+
+            console.error(
+                "CREATE ORDER ERROR:"
+            );
+
+            console.error(error);
+
+            console.error(
+                "===================================="
             );
 
 
             res.status(500).json({
 
-                success:
-                    false,
+                success: false,
 
                 error:
-                    error.message
+                    error.message ||
+                    "Order creation failed."
 
             });
 
@@ -1080,12 +1354,18 @@ app.post(
 );
 
 
-// ========================================
-// MULTER ERROR HANDLER
-// ========================================
+/* =========================================================
+   MULTER ERROR HANDLER
+========================================================= */
 
 app.use(
     (error, req, res, next) => {
+
+        console.error(
+            "GLOBAL ERROR:",
+            error
+        );
+
 
         if (
             error instanceof
@@ -1094,8 +1374,7 @@ app.use(
 
             return res.status(400).json({
 
-                success:
-                    false,
+                success: false,
 
                 error:
                     "Screenshot upload failed: " +
@@ -1109,13 +1388,12 @@ app.use(
         if (
             error &&
             error.message ===
-            "Only image files are allowed."
+            "Only JPG, PNG and WEBP images are allowed."
         ) {
 
             return res.status(400).json({
 
-                success:
-                    false,
+                success: false,
 
                 error:
                     error.message
@@ -1131,9 +1409,9 @@ app.use(
 );
 
 
-// ========================================
-// START SERVER
-// ========================================
+/* =========================================================
+   START SERVER
+========================================================= */
 
 const PORT =
     process.env.PORT || 3000;
