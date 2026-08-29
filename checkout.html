@@ -1,1422 +1,2152 @@
-const express = require("express");
-const path = require("path");
-const crypto = require("crypto");
-const multer = require("multer");
-const cloudinary = require("cloudinary").v2;
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TopUpMandu Checkout</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f7fb;
+            color: #111827;
+        }
+
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 18px 20px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #1677ff;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+            padding: 24px 16px 50px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 18px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 19px;
+        }
+
+        .product {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 14px 0;
+            border-bottom: 1px solid #eeeeee;
+        }
+
+        .product:last-child {
+            border-bottom: 0;
+        }
+
+        .product-left {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .product-image {
+            width: 58px;
+            height: 58px;
+            border-radius: 9px;
+            object-fit: cover;
+            background: #eef2f7;
+            flex-shrink: 0;
+        }
+
+        .product-name {
+            font-weight: 600;
+        }
+
+        .product-info {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .product-price {
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 18px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 7px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #d1d5db;
+            border-radius: 9px;
+            font-size: 15px;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        input:focus {
+            border-color: #1677ff;
+        }
+
+        .payment-option {
+            display: flex;
+            align-items: center;
+            border: 1px solid #d1d5db;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .payment-option:hover {
+            border-color: #1677ff;
+        }
+
+        .payment-option input {
+            width: auto;
+            margin: 0 8px 0 0;
+        }
+
+        .qr-box {
+            margin-top: 18px;
+            padding: 18px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            text-align: center;
+            background: #fafafa;
+        }
+
+        .qr-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .qr-image {
+            width: 260px;
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+        }
+
+        .qr-help {
+            margin-top: 12px;
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .upload-box {
+            margin-top: 18px;
+            padding: 16px;
+            border: 1px dashed #b8c1d1;
+            border-radius: 12px;
+            background: #f9fafb;
+        }
+
+        .upload-box input[type="file"] {
+            width: 100%;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .file-help {
+            color: #6b7280;
+            font-size: 12px;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        .preview {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .preview img {
+            width: 180px;
+            max-width: 100%;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .checkout-button {
+            width: 100%;
+            border: 0;
+            border-radius: 10px;
+            background: #1677ff;
+            color: white;
+            font-size: 17px;
+            font-weight: 700;
+            padding: 16px;
+            cursor: pointer;
+            margin-top: 18px;
+        }
+
+        .checkout-button:hover {
+            background: #0868ed;
+        }
+
+        .checkout-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            display: none;
+            line-height: 1.5;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            display: none;
+            line-height: 1.5;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px 10px;
+            color: #6b7280;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px 10px;
+            color: #6b7280;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 9px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 14px;
+            display: none;
+        }
+
+        .order-number {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 600px) {
+
+            .container {
+                padding: 18px 12px 40px;
+            }
+
+            .title {
+                font-size: 23px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .product {
+                align-items: flex-start;
+            }
+
+            .product-image {
+                width: 50px;
+                height: 50px;
+            }
+
+            .product-price {
+                font-size: 14px;
+            }
+
+            .qr-image {
+                width: 230px;
+            }
+
+        }
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <div class="header">
+        TopUpMandu
+    </div>
+
+
+    <main class="container">
+
+
+        <div class="title">
+            Checkout
+        </div>
+
 
-const app = express();
+        <div id="error" class="error"></div>
 
+        <div id="success" class="success"></div>
 
-// =====================================================
-// CLOUDINARY
-// =====================================================
 
-cloudinary.config({
-cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-api_key: process.env.CLOUDINARY_API_KEY,
-api_secret: process.env.CLOUDINARY_API_SECRET
-});
+        <!-- ================================================= -->
+        <!-- ORDER -->
+        <!-- ================================================= -->
 
+        <div class="card">
 
-// =====================================================
-// PAYMENT SCREENSHOT UPLOAD
-// =====================================================
+            <h2>
+                🛒 Your Order
+            </h2>
 
-const upload = multer({
+            <div id="cart-items">
 
-storage: multer.memoryStorage(),
+                <div class="loading">
+                    Loading your cart...
+                </div>
 
-limits: {
-fileSize: 5 * 1024 * 1024
-},
+            </div>
 
-fileFilter: (req, file, cb) => {
 
-if (
-file.mimetype === "image/jpeg" ||
-file.mimetype === "image/png" ||
-file.mimetype === "image/webp"
-) {
+            <div class="total-row">
 
-cb(null, true);
+                <span>
+                    Total
+                </span>
 
-} else {
+                <span id="cart-total">
+                    Rs. 0.00
+                </span>
 
-cb(
-new Error(
-"Only JPG, PNG and WEBP images are allowed."
-)
-);
+            </div>
 
-}
+        </div>
 
-}
 
-});
+        <!-- ================================================= -->
+        <!-- CUSTOMER -->
+        <!-- ================================================= -->
 
+        <div class="card">
 
-// =====================================================
-// EXPRESS
-// =====================================================
+            <h2>
+                👤 Customer Details
+            </h2>
 
-app.use(
-express.json({
-limit: "1mb"
-})
-);
 
-app.use(
-express.urlencoded({
-extended: true
-})
-);
+            <label for="name">
+                Full Name
+            </label>
 
-app.use(
-express.static(__dirname)
-);
+            <input type="text" id="name" placeholder="Enter your full name" autocomplete="name">
 
 
-// =====================================================
-// ENVIRONMENT VARIABLES
-// =====================================================
+            <label for="email">
+                Email
+            </label>
 
-const SHOPIFY_SHOP =
-process.env.SHOPIFY_SHOP;
+            <input type="email" id="email" placeholder="Enter your email" autocomplete="email">
 
-const SHOPIFY_CLIENT_ID =
-process.env.SHOPIFY_CLIENT_ID;
 
-const SHOPIFY_CLIENT_SECRET =
-process.env.SHOPIFY_CLIENT_SECRET;
+            <label for="phone">
+                Phone Number
+            </label>
 
+            <input type="tel" id="phone" placeholder="98XXXXXXXX" autocomplete="tel">
 
-// =====================================================
-// TEMPORARY CART STORAGE
-// =====================================================
+        </div>
 
-const carts = new Map();
 
+        <!-- ================================================= -->
+        <!-- GAME DETAILS -->
+        <!-- ================================================= -->
 
-// =====================================================
-// HOME
-// =====================================================
+        <div class="card" id="game-details-card" style="display:none;">
 
-app.get("/", (req, res) => {
+            <h2>
+                🎮 Game Details
+            </h2>
 
-res.send(
-"TopUpMandu Custom Checkout Backend is running!"
-);
+            <div id="game-fields"></div>
 
-});
+        </div>
 
 
-// =====================================================
-// CHECKOUT PAGE
-// =====================================================
+        <!-- ================================================= -->
+        <!-- PAYMENT -->
+        <!-- ================================================= -->
 
-app.get("/checkout", (req, res) => {
+        <div class="card">
 
-res.sendFile(
-path.join(
-__dirname,
-"checkout.html"
-)
-);
+            <h2>
+                💳 Payment Method
+            </h2>
 
-});
 
+            <label class="payment-option">
 
-// =====================================================
-// SHOPIFY TOKEN
-// =====================================================
+                <input type="radio" name="payment" value="esewa" checked>
 
-async function getShopifyToken() {
+                eSewa
 
-if (
-!SHOPIFY_SHOP ||
-!SHOPIFY_CLIENT_ID ||
-!SHOPIFY_CLIENT_SECRET
-) {
+            </label>
 
-throw new Error(
-"Shopify environment variables are missing."
-);
 
-}
+            <label class="payment-option">
 
+                <input type="radio" name="payment" value="khalti">
 
-const response =
-await fetch(
+                Khalti
 
-`https://${SHOPIFY_SHOP}.myshopify.com/admin/oauth/access_token`,
+            </label>
 
-{
 
-method: "POST",
+            <!-- ================================================= -->
+            <!-- ESEWA -->
+            <!-- ================================================= -->
 
-headers: {
+            <div id="esewa-qr" class="qr-box">
 
-"Content-Type":
-"application/json"
+                <div class="qr-title">
+                    Scan eSewa QR to Pay
+                </div>
 
-},
 
-body:
-JSON.stringify({
+                <img class="qr-image"
+                    src="https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.48_PM.jpg?v=1787933542"
+                    alt="eSewa Payment QR">
 
-client_id:
-SHOPIFY_CLIENT_ID,
 
-client_secret:
-SHOPIFY_CLIENT_SECRET,
+                <div class="qr-help">
 
-grant_type:
-"client_credentials"
+                    Open your eSewa app and scan the QR code.
 
-})
+                    <br>
 
-}
+                    After completing payment, upload the payment screenshot below.
 
-);
+                </div>
 
+            </div>
 
-const data =
-await response.json();
 
+            <!-- ================================================= -->
+            <!-- KHALTI -->
+            <!-- ================================================= -->
 
-if (!response.ok) {
+            <div id="khalti-qr" class="qr-box hidden">
 
-throw new Error(
+                <div class="qr-title">
+                    Scan Khalti QR to Pay
+                </div>
 
-data.error_description ||
-data.error ||
-"Could not get Shopify access token"
 
-);
+                <img class="qr-image"
+                    src="https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.35_PM.jpg?v=1787933542"
+                    alt="Khalti Payment QR">
 
-}
 
+                <div class="qr-help">
 
-return data.access_token;
+                    Open your Khalti app and scan the QR code.
 
-}
+                    <br>
 
+                    After completing payment, upload the payment screenshot below.
 
-// =====================================================
-// TEST SHOPIFY
-// =====================================================
+                </div>
 
-app.get(
-"/test-shopify",
-async (req, res) => {
+            </div>
 
-try {
 
-await getShopifyToken();
+            <!-- ================================================= -->
+            <!-- SCREENSHOT -->
+            <!-- ================================================= -->
 
+            <div class="upload-box">
 
-res.json({
+                <label for="paymentScreenshot">
 
-success: true,
+                    📸 Payment Screenshot
 
-message:
-"Successfully connected to Shopify!"
+                </label>
 
-});
 
-} catch (error) {
+                <input type="file" id="paymentScreenshot" name="paymentScreenshot"
+                    accept="image/jpeg,image/png,image/webp">
 
-console.error(error);
 
+                <div class="file-help">
 
-res.status(500).json({
+                    Upload a screenshot after completing your payment.
 
-success: false,
+                    <br>
 
-error:
-error.message
+                    JPG, PNG or WEBP — maximum 5MB.
 
-});
+                </div>
 
-}
 
-}
-);
+                <div id="preview" class="preview">
 
+                    <img id="preview-image" src="" alt="Payment screenshot preview">
 
-// =====================================================
-// SAVE CART
-// =====================================================
+                </div>
 
-app.post(
-"/cart",
-(req, res) => {
+            </div>
 
-try {
 
-const cart =
-req.body;
+            <div id="status" class="status"></div>
 
 
-if (
-!cart ||
-!Array.isArray(cart.items)
-) {
+            <button id="place-order" class="checkout-button">
 
-return res.status(400).json({
+                Place Order
 
-success: false,
+            </button>
 
-error:
-"Invalid cart data."
 
-});
+        </div>
 
-}
 
+    </main>
 
-if (
-cart.items.length === 0
-) {
 
-return res.status(400).json({
+    <script>
 
-success: false,
 
-error:
-"Cart is empty."
+        /* =========================================================
+           BACKEND
+        ========================================================= */
 
-});
+        const BACKEND =
+            "https://topupmandu-checkout-app.vercel.app";
 
-}
 
+        /* =========================================================
+           CART
+        ========================================================= */
 
-const cartId =
-crypto.randomUUID();
+        let currentCart = null;
 
 
-carts.set(
+        /* =========================================================
+           GET CART PARAMETER
+        ========================================================= */
 
-cartId,
+        function getEncodedCart() {
 
-{
+            const params =
+                new URLSearchParams(
+                    window.location.search
+                );
 
-cart: cart,
+            return params.get("cart");
 
-createdAt:
-Date.now()
+        }
 
-}
 
-);
+        /* =========================================================
+           DECODE CART
+        ========================================================= */
 
+        function getCartFromURL() {
 
-// Remove carts older than 30 minutes
+            const encodedCart =
+                getEncodedCart();
 
-for (
-const [
-id,
-stored
-]
-of carts.entries()
-) {
 
-if (
-Date.now() -
-stored.createdAt >
-30 * 60 * 1000
-) {
+            if (!encodedCart) {
 
-carts.delete(id);
+                throw new Error(
+                    "No cart data was provided."
+                );
 
-}
+            }
 
-}
 
+            try {
 
-res.json({
+                const binaryString =
+                    atob(encodedCart);
 
-success: true,
 
-cartId:
-cartId
+                const bytes =
+                    new Uint8Array(
+                        binaryString.length
+                    );
 
-});
 
-} catch (error) {
+                for (
+                    let i = 0;
+                    i < binaryString.length;
+                    i++
+                ) {
 
-console.error(error);
+                    bytes[i] =
+                        binaryString.charCodeAt(i);
 
+                }
 
-res.status(500).json({
 
-success: false,
+                const jsonString =
+                    new TextDecoder(
+                        "utf-8"
+                    ).decode(bytes);
 
-error:
-error.message
 
-});
+                return JSON.parse(
+                    jsonString
+                );
 
-}
+            }
 
-}
-);
+            catch (error) {
 
+                console.error(
+                    "Cart decoding error:",
+                    error
+                );
 
-// =====================================================
-// GET CART
-// =====================================================
 
-app.get(
-"/cart/:cartId",
-(req, res) => {
+                throw new Error(
+                    "The cart data could not be read."
+                );
 
-try {
+            }
 
-const stored =
-carts.get(
-req.params.cartId
-);
+        }
 
 
-if (!stored) {
+        /* =========================================================
+           FORMAT MONEY
+        ========================================================= */
 
-return res.status(404).json({
+        function formatMoney(value) {
 
-success: false,
+            const amount =
+                Number(value || 0) / 100;
 
-error:
-"Cart not found or expired."
 
-});
+            return "Rs. " +
+                amount.toLocaleString(
+                    "en-NP",
+                    {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }
+                );
 
-}
+        }
 
 
-if (
-Date.now() -
-stored.createdAt >
-30 * 60 * 1000
-) {
+        /* =========================================================
+           ESCAPE HTML
+        ========================================================= */
 
-carts.delete(
-req.params.cartId
-);
+        function escapeHTML(value) {
 
+            const div =
+                document.createElement(
+                    "div"
+                );
 
-return res.status(404).json({
 
-success: false,
+            div.textContent =
+                value == null
+                    ? ""
+                    : String(value);
 
-error:
-"Cart has expired."
 
-});
+            return div.innerHTML;
 
-}
+        }
 
 
-res.json({
+        /* =========================================================
+           GAME HANDLES
+        ========================================================= */
 
-success: true,
+        const gameProductHandles = [
 
-cart:
-stored.cart
+            "free-fire-diamonds",
+            "pubg-uc",
+            "clash-of-clans",
+            "valorant-ios-only",
+            "efootball-pes-2026",
+            "genshin-impact",
+            "brawl-stars",
+            "roblox",
+            "mobile-legends"
 
-});
+        ];
 
-} catch (error) {
 
-console.error(error);
+        /* =========================================================
+           GAME TITLES
+        ========================================================= */
 
+        const gameProductTitles = [
 
-res.status(500).json({
+            "free fire",
+            "free fire diamond",
+            "pubg",
+            "pubg uc",
+            "clash of clans",
+            "valorant",
+            "efootball",
+            "genshin impact",
+            "brawl stars",
+            "roblox",
+            "mobile legends"
 
-success: false,
+        ];
 
-error:
-error.message
 
-});
+        /* =========================================================
+           GAME DETECTION
+        ========================================================= */
 
-}
+        function isGameProduct(item) {
 
-}
-);
+            const handle =
+                String(
+                    item.handle || ""
+                ).toLowerCase();
 
 
-// =====================================================
-// UPLOAD PAYMENT SCREENSHOT
-// =====================================================
+            if (
+                gameProductHandles.includes(
+                    handle
+                )
+            ) {
 
-app.post(
-"/upload-payment-screenshot",
-upload.single("paymentScreenshot"),
-async (req, res) => {
+                return true;
 
-try {
+            }
 
-if (!req.file) {
 
-return res.status(400).json({
+            const title =
+                String(
+                    item.title ||
+                    item.product_title ||
+                    ""
+                ).toLowerCase();
 
-success: false,
 
-error:
-"Payment screenshot is required."
+            return gameProductTitles.some(
+                game =>
+                    title.includes(
+                        game
+                    )
+            );
 
-});
+        }
 
-}
 
+        /* =========================================================
+           MOBILE LEGENDS DETECTION
+        ========================================================= */
 
-const uploadResult =
-await new Promise(
-(resolve, reject) => {
+        function isMobileLegends(item) {
 
-const stream =
-cloudinary.uploader.upload_stream(
+            const handle =
+                String(
+                    item.handle || ""
+                ).toLowerCase();
 
-{
 
-folder:
-"topupmandu/payment-screenshots",
+            const title =
+                String(
+                    item.title ||
+                    item.product_title ||
+                    ""
+                ).toLowerCase();
 
-resource_type:
-"image"
 
-},
+            return (
+                handle === "mobile-legends" ||
+                title.includes("mobile legends")
+            );
 
-(
-error,
-result
-) => {
+        }
 
-if (error) {
 
-reject(error);
+        /* =========================================================
+           DISPLAY GAME FIELDS
+        ========================================================= */
 
-} else {
+        function displayGameFields(cart) {
 
-resolve(result);
+            const card =
+                document.getElementById(
+                    "game-details-card"
+                );
 
-}
 
-}
+            const fields =
+                document.getElementById(
+                    "game-fields"
+                );
 
-);
 
+            if (!card || !fields) {
+                return;
+            }
 
-stream.end(
-req.file.buffer
-);
 
-}
-);
+            const gameItem =
+                cart.items.find(
+                    item =>
+                        isGameProduct(item)
+                );
 
 
-res.json({
+            if (!gameItem) {
 
-success: true,
+                card.style.display =
+                    "none";
 
-screenshotUrl:
-uploadResult.secure_url
+                fields.innerHTML =
+                    "";
 
-});
+                return;
 
-} catch (error) {
+            }
 
-console.error(
-"Screenshot upload error:",
-error
-);
 
+            card.style.display =
+                "block";
 
-res.status(500).json({
 
-success: false,
+            if (
+                isMobileLegends(
+                    gameItem
+                )
+            ) {
 
-error:
-error.message
+                fields.innerHTML = `
 
-});
+            <label for="player-id">
+                UID
+            </label>
 
-}
+            <input
+                type="text"
+                id="player-id"
+                placeholder="Enter your Mobile Legends UID"
+                autocomplete="off"
+            >
 
-}
-);
 
+            <label for="region">
+                Region
+            </label>
 
-// =====================================================
-// CREATE SHOPIFY ORDER
-// =====================================================
+            <input
+                type="text"
+                id="region"
+                placeholder="Enter your Region"
+                autocomplete="off"
+            >
 
-app.post(
-"/create-order",
-async (req, res) => {
+        `;
 
-try {
+            }
 
-console.log(
-"======================================"
-);
+            else {
 
-console.log(
-"TOPUPMANDU CREATE ORDER"
-);
+                fields.innerHTML = `
 
-console.log(
-"======================================"
-);
+            <label for="player-id">
+                Player ID / UID
+            </label>
 
+            <input
+                type="text"
+                id="player-id"
+                placeholder="Enter your Player ID / UID"
+                autocomplete="off"
+            >
 
-// =================================================
-// READ REQUEST
-// =================================================
+        `;
 
-let {
-customer,
-items,
-playerId,
-region,
-paymentMethod,
-paymentScreenshot
-} = req.body;
+            }
 
+        }
 
-// =================================================
-// PARSE CUSTOMER / ITEMS IF SENT AS STRINGS
-// =================================================
 
-let parsedCustomer =
-customer;
+        /* =========================================================
+           DISPLAY CART
+        ========================================================= */
 
-let parsedItems =
-items;
+        function displayCart(cart) {
 
+            const container =
+                document.getElementById(
+                    "cart-items"
+                );
 
-try {
 
-if (
-typeof customer ===
-"string"
-) {
+            const total =
+                document.getElementById(
+                    "cart-total"
+                );
 
-parsedCustomer =
-JSON.parse(customer);
 
-}
+            if (
+                !cart ||
+                !Array.isArray(
+                    cart.items
+                ) ||
+                cart.items.length === 0
+            ) {
 
+                container.innerHTML = `
 
-if (
-typeof items ===
-"string"
-) {
+            <div class="empty">
+                Your cart is empty.
+            </div>
 
-parsedItems =
-JSON.parse(items);
+        `;
 
-}
 
-} catch (error) {
+                total.textContent =
+                    "Rs. 0.00";
 
-return res.status(400).json({
 
-success: false,
+                return;
 
-error:
-"Invalid customer or cart data."
+            }
 
-});
 
-}
+            let html = "";
 
 
-// =================================================
-// VALIDATE ITEMS
-// =================================================
+            cart.items.forEach(
+                item => {
 
-if (
-!parsedItems ||
-!Array.isArray(parsedItems) ||
-parsedItems.length === 0
-) {
+                    const title =
+                        item.title ||
+                        item.product_title ||
+                        "Product";
 
-return res.status(400).json({
 
-success: false,
+                    const variant =
+                        item.variant_title &&
+                            item.variant_title !==
+                            "Default Title"
+                            ? item.variant_title
+                            : "";
 
-error:
-"Cart items are required."
 
-});
+                    const quantity =
+                        Number(
+                            item.quantity || 1
+                        );
 
-}
 
+                    let linePrice;
 
-// =================================================
-// CUSTOMER VALUES
-// =================================================
 
-const customerName =
-String(
-parsedCustomer?.name ||
-""
-).trim();
+                    if (
+                        item.final_line_price != null
+                    ) {
 
+                        linePrice =
+                            Number(
+                                item.final_line_price
+                            );
 
-const customerEmail =
-String(
-parsedCustomer?.email ||
-""
-).trim();
+                    }
 
+                    else if (
+                        item.line_price != null
+                    ) {
 
-const customerPhone =
-String(
-parsedCustomer?.phone ||
-""
-).trim();
+                        linePrice =
+                            Number(
+                                item.line_price
+                            );
 
+                    }
 
-// =================================================
-// SPLIT CUSTOMER NAME
-// =================================================
+                    else {
 
-let firstName =
-customerName;
+                        linePrice =
+                            Number(
+                                item.final_price ||
+                                item.price ||
+                                0
+                            ) *
+                            quantity;
 
-let lastName =
-"";
+                    }
 
 
-if (customerName.includes(" ")) {
+                    let image = "";
 
-const nameParts =
-customerName.split(
-/\s+/
-);
 
+                    if (item.image) {
 
-firstName =
-nameParts.shift();
+                        image = `
 
+                    <img
+                        class="product-image"
+                        src="${escapeHTML(item.image)}"
+                        alt="${escapeHTML(title)}"
+                    >
 
-lastName =
-nameParts.join(" ");
+                `;
 
-}
+                    }
 
 
-// =================================================
-// SHOPIFY TOKEN
-// =================================================
+                    html += `
 
-const accessToken =
-await getShopifyToken();
+                <div class="product">
 
+                    <div class="product-left">
 
-// =================================================
-// SHOPIFY LINE ITEMS
-// =================================================
+                        ${image}
 
-const lineItems =
-parsedItems.map(
-(item) => {
+                        <div>
 
-const variantId =
-item.variant_id ||
-item.variantId;
+                            <div class="product-name">
+                                ${escapeHTML(title)}
+                            </div>
 
+                            <div class="product-info">
 
-if (!variantId) {
+                                ${variant
+                            ? escapeHTML(variant) + " · "
+                            : ""
+                        }
 
-throw new Error(
-"Cart item is missing variant_id."
-);
+                                Quantity:
+                                ${quantity}
 
-}
+                            </div>
 
+                        </div>
 
-const variantGid =
-String(
-variantId
-).startsWith(
-"gid://"
-)
+                    </div>
 
-? String(
-variantId
-)
 
-: `gid://shopify/ProductVariant/${variantId}`;
+                    <div class="product-price">
 
+                        ${formatMoney(linePrice)}
 
-// -----------------------------------------
-// PRODUCT-SPECIFIC PROPERTIES
-// -----------------------------------------
+                    </div>
 
-const properties = [];
+                </div>
 
+            `;
 
-/*
-* Keep the properties that came from the
-* Shopify cart item.
-*
-* This means products can have their own
-* Player ID / Region / Package information.
-*/
+                }
+            );
 
-if (
-item.properties &&
-typeof item.properties === "object"
-) {
 
-for (
-const [
-key,
-value
-]
-of Object.entries(
-item.properties
-)
-) {
+            container.innerHTML =
+                html;
 
-if (
-value !== null &&
-value !== undefined &&
-String(value).trim() !== ""
-) {
 
-properties.push({
+            total.textContent =
+                formatMoney(
+                    cart.total_price
+                );
 
-name:
-String(key),
 
-value:
-String(value)
+            displayGameFields(
+                cart
+            );
 
-});
+        }
 
-}
 
-}
+        /* =========================================================
+           PAYMENT QR
+        ========================================================= */
 
-}
+        function updatePaymentQR() {
 
+            const selected =
+                document.querySelector(
+                    'input[name="payment"]:checked'
+                );
 
-/*
-* If the checkout sends Player ID or Region
-* separately, add them only when they aren't
-* already present in the product properties.
-*/
 
-const hasPlayerId =
-properties.some(
-property =>
-property.name
-.toLowerCase()
-.replace(/\s+/g, "")
-===
-"playerid"
-);
+            const esewaQR =
+                document.getElementById(
+                    "esewa-qr"
+                );
 
 
-const hasRegion =
-properties.some(
-property =>
-property.name
-.toLowerCase()
-.replace(/\s+/g, "")
-===
-"region"
-);
+            const khaltiQR =
+                document.getElementById(
+                    "khalti-qr"
+                );
 
 
-if (
-playerId &&
-!hasPlayerId
-) {
+            if (!selected) {
+                return;
+            }
 
-properties.push({
 
-name:
-"Player ID",
+            if (
+                selected.value ===
+                "esewa"
+            ) {
 
-value:
-String(
-playerId
-)
+                esewaQR.classList.remove(
+                    "hidden"
+                );
 
-});
+                khaltiQR.classList.add(
+                    "hidden"
+                );
 
-}
+            }
 
+            else {
 
-if (
-region &&
-!hasRegion
-) {
+                esewaQR.classList.add(
+                    "hidden"
+                );
 
-properties.push({
+                khaltiQR.classList.remove(
+                    "hidden"
+                );
 
-name:
-"Region",
+            }
 
-value:
-String(
-region
-)
+        }
 
-});
 
-}
+        /* =========================================================
+           SHOW ERROR
+        ========================================================= */
 
+        function showError(message) {
 
-// -----------------------------------------
-// PAYMENT METHOD
-// -----------------------------------------
+            const errorBox =
+                document.getElementById(
+                    "error"
+                );
 
-if (paymentMethod) {
 
-properties.push({
+            errorBox.textContent =
+                message;
 
-name:
-"Payment Method",
 
-value:
-String(
-paymentMethod
-)
+            errorBox.style.display =
+                "block";
 
-});
 
-}
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
 
+        }
 
-// -----------------------------------------
-// CREATE LINE ITEM
-// -----------------------------------------
 
-const lineItem = {
+        /* =========================================================
+           SHOW SUCCESS
+        ========================================================= */
 
-variantId:
-variantGid,
+        function showSuccess(message) {
 
-quantity:
-Number(
-item.quantity
-) || 1
+            const successBox =
+                document.getElementById(
+                    "success"
+                );
 
-};
 
+            successBox.innerHTML =
+                message;
 
-if (
-properties.length > 0
-) {
 
-lineItem.properties =
-properties;
+            successBox.style.display =
+                "block";
 
-}
 
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
 
-return lineItem;
+        }
 
-}
-);
 
+        /* =========================================================
+           STATUS
+        ========================================================= */
 
-// =================================================
-// ORDER CUSTOM ATTRIBUTES
-// =================================================
+        function setStatus(message) {
 
-const attributes = [];
+            const status =
+                document.getElementById(
+                    "status"
+                );
 
 
-// Payment Method
+            status.textContent =
+                message;
 
-if (paymentMethod) {
 
-attributes.push({
+            status.style.display =
+                "block";
 
-key:
-"Payment Method",
+        }
 
-value:
-String(
-paymentMethod
-)
 
-});
+        function hideStatus() {
 
-}
+            const status =
+                document.getElementById(
+                    "status"
+                );
 
 
-// Payment Screenshot
+            status.style.display =
+                "none";
 
-if (paymentScreenshot) {
+        }
 
-attributes.push({
 
-key:
-"Payment Screenshot",
+        /* =========================================================
+           SCREENSHOT PREVIEW
+        ========================================================= */
 
-value:
-String(
-paymentScreenshot
-)
+        document
+            .getElementById(
+                "paymentScreenshot"
+            )
+            .addEventListener(
+                "change",
+                function () {
 
-});
+                    const file =
+                        this.files[0];
 
-}
 
+                    const preview =
+                        document.getElementById(
+                            "preview"
+                        );
 
-// =================================================
-// SHOPIFY ORDER
-// =================================================
 
-const mutation = `
+                    const previewImage =
+                        document.getElementById(
+                            "preview-image"
+                        );
 
-mutation CreateOrder(
-$order: OrderCreateOrderInput!
-) {
 
-orderCreate(
-order: $order
-) {
+                    if (!file) {
 
-userErrors {
+                        preview.style.display =
+                            "none";
 
-field
+                        return;
 
-message
+                    }
 
-}
 
-order {
+                    const allowedTypes = [
 
-id
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp"
 
-name
+                    ];
 
-displayFinancialStatus
 
-}
+                    if (
+                        !allowedTypes.includes(
+                            file.type
+                        )
+                    ) {
 
-}
+                        alert(
+                            "Please select a JPG, PNG or WEBP image."
+                        );
 
-}
 
-`;
+                        this.value =
+                            "";
 
 
-// =================================================
-// BUILD ORDER
-// =================================================
+                        preview.style.display =
+                            "none";
 
-const order = {
 
-lineItems:
-lineItems,
+                        return;
 
-/*
-* Clean note.
-*
-* Customer name, payment method,
-* screenshot and player information
-* are no longer duplicated here.
-*/
+                    }
 
-note:
-"TopUpMandu Custom Checkout",
 
-tags: [
-"TopUpMandu",
-"Custom Checkout"
-]
+                    if (
+                        file.size >
+                        5 * 1024 * 1024
+                    ) {
 
-};
+                        alert(
+                            "Screenshot must be smaller than 5MB."
+                        );
 
 
-// =================================================
-// CUSTOMER EMAIL
-// =================================================
+                        this.value =
+                            "";
 
-if (customerEmail) {
 
-order.email =
-customerEmail;
+                        preview.style.display =
+                            "none";
 
-}
 
+                        return;
 
-// =================================================
-// CUSTOMER PHONE
-// =================================================
+                    }
 
-if (customerPhone) {
 
-order.phone =
-customerPhone;
+                    const reader =
+                        new FileReader();
 
-}
 
+                    reader.onload =
+                        event => {
 
-// =================================================
-// CUSTOMER
-// =================================================
+                            previewImage.src =
+                                event.target.result;
 
-if (
-customerName ||
-customerEmail ||
-customerPhone
-) {
 
-order.customer = {
+                            preview.style.display =
+                                "block";
 
-toUpsert: {
+                        };
 
-...(customerEmail
-? {
-email:
-customerEmail
-}
-: {}),
 
-...(customerPhone
-? {
-phone:
-customerPhone
-}
-: {}),
+                    reader.readAsDataURL(
+                        file
+                    );
 
-...(firstName
-? {
-firstName:
-firstName
-}
-: {}),
+                }
+            );
 
-...(lastName
-? {
-lastName:
-lastName
-}
-: {})
 
-}
+        /* =========================================================
+           INITIALIZE
+        ========================================================= */
 
-};
+        function initialize() {
 
-}
+            try {
 
+                console.log(
+                    "TopUpMandu: Reading cart..."
+                );
 
-// =================================================
-// CUSTOM ATTRIBUTES
-// =================================================
 
-if (
-attributes.length > 0
-) {
+                currentCart =
+                    getCartFromURL();
 
-order.customAttributes =
-attributes;
 
-}
+                console.log(
+                    "Decoded cart:",
+                    currentCart
+                );
 
 
-// =================================================
-// DEBUG LOG
-// =================================================
+                displayCart(
+                    currentCart
+                );
 
-console.log(
-"Shopify order payload:"
-);
+            }
 
-console.log(
-JSON.stringify(
-order,
-null,
-2
-)
-);
+            catch (error) {
 
+                console.error(
+                    "Cart error:",
+                    error
+                );
 
-// =================================================
-// SEND TO SHOPIFY
-// =================================================
 
-const response =
-await fetch(
+                document.getElementById(
+                    "cart-items"
+                ).innerHTML = `
 
-`https://${SHOPIFY_SHOP}.myshopify.com/admin/api/2026-07/graphql.json`,
+            <div class="empty">
 
-{
+                Your cart could not be loaded.
 
-method:
-"POST",
+                <br><br>
 
-headers: {
+                <small>
+                    ${escapeHTML(
+                    error.message
+                )}
+                </small>
 
-"Content-Type":
-"application/json",
+            </div>
 
-"X-Shopify-Access-Token":
-accessToken
+        `;
 
-},
 
-body:
-JSON.stringify({
+                document.getElementById(
+                    "cart-total"
+                ).textContent =
+                    "Rs. 0.00";
 
-query:
-mutation,
 
-variables: {
+                showError(
+                    error.message
+                );
 
-order:
-order
+            }
 
-}
+        }
 
-})
 
-}
+        /* =========================================================
+           PAYMENT RADIO EVENTS
+        ========================================================= */
 
-);
+        document
+            .querySelectorAll(
+                'input[name="payment"]'
+            )
+            .forEach(
+                radio => {
 
+                    radio.addEventListener(
+                        "change",
+                        updatePaymentQR
+                    );
 
-const result =
-await response.json();
+                }
+            );
 
 
-console.log(
-"Shopify response:"
-);
+        /* =========================================================
+           PLACE ORDER
+        ========================================================= */
 
-console.log(
-JSON.stringify(
-result,
-null,
-2
-)
-);
+        document
+            .getElementById(
+                "place-order"
+            )
+            .addEventListener(
+                "click",
+                async function () {
 
 
-// =================================================
-// GRAPHQL ERRORS
-// =================================================
+                    const button =
+                        document.getElementById(
+                            "place-order"
+                        );
 
-if (
-result.errors
-) {
 
-return res.status(500).json({
+                    const errorBox =
+                        document.getElementById(
+                            "error"
+                        );
 
-success: false,
 
-error:
-result.errors
+                    const successBox =
+                        document.getElementById(
+                            "success"
+                        );
 
-});
 
-}
+                    errorBox.style.display =
+                        "none";
 
 
-// =================================================
-// ORDER RESULT
-// =================================================
+                    successBox.style.display =
+                        "none";
 
-const orderResult =
-result.data?.orderCreate;
 
+                    hideStatus();
 
-if (
-!orderResult
-) {
 
-return res.status(500).json({
+                    /* =============================================
+                       CART
+                    ============================================= */
 
-success: false,
+                    if (!currentCart) {
 
-error:
-"Shopify did not return an order."
+                        showError(
+                            "Your cart could not be loaded."
+                        );
 
-});
+                        return;
 
-}
+                    }
 
 
-// =================================================
-// SHOPIFY USER ERRORS
-// =================================================
+                    if (
+                        !currentCart.items ||
+                        !Array.isArray(
+                            currentCart.items
+                        ) ||
+                        currentCart.items.length === 0
+                    ) {
 
-if (
-orderResult.userErrors &&
-orderResult.userErrors.length > 0
-) {
+                        showError(
+                            "Your cart is empty."
+                        );
 
-return res.status(400).json({
+                        return;
 
-success: false,
+                    }
 
-errors:
-orderResult.userErrors
 
-});
+                    /* =============================================
+                       CUSTOMER
+                    ============================================= */
 
-}
+                    const name =
+                        document
+                            .getElementById(
+                                "name"
+                            )
+                            .value
+                            .trim();
 
 
-// =================================================
-// SUCCESS
-// =================================================
+                    const email =
+                        document
+                            .getElementById(
+                                "email"
+                            )
+                            .value
+                            .trim();
 
-console.log(
-"======================================"
-);
 
-console.log(
-"ORDER CREATED SUCCESSFULLY"
-);
+                    const phone =
+                        document
+                            .getElementById(
+                                "phone"
+                            )
+                            .value
+                            .trim();
 
-console.log(
-"Order:",
-orderResult.order?.name
-);
 
-console.log(
-"======================================"
-);
+                    /* =============================================
+                       GAME DETAILS
+                    ============================================= */
 
+                    const playerIdElement =
+                        document.getElementById(
+                            "player-id"
+                        );
 
-res.json({
 
-success:
-true,
+                    const regionElement =
+                        document.getElementById(
+                            "region"
+                        );
 
-message:
-"Order created successfully!",
 
-screenshotUrl:
-paymentScreenshot ||
-null,
+                    const playerId =
+                        playerIdElement
+                            ? playerIdElement.value.trim()
+                            : "";
 
-order:
-orderResult.order
 
-});
+                    const region =
+                        regionElement
+                            ? regionElement.value.trim()
+                            : "";
 
 
-} catch (error) {
+                    /* =============================================
+                       PAYMENT
+                    ============================================= */
 
-console.error(
-"======================================"
-);
+                    const paymentElement =
+                        document.querySelector(
+                            'input[name="payment"]:checked'
+                        );
 
-console.error(
-"CREATE ORDER ERROR:"
-);
 
-console.error(
-error
-);
+                    const paymentMethod =
+                        paymentElement
+                            ? paymentElement.value
+                            : "esewa";
 
-console.error(
-"======================================"
-);
 
+                    /* =============================================
+                       SCREENSHOT
+                    ============================================= */
 
-res.status(500).json({
+                    const screenshotInput =
+                        document.getElementById(
+                            "paymentScreenshot"
+                        );
 
-success: false,
 
-error:
-error.message
+                    const screenshot =
+                        screenshotInput.files[0];
 
-});
 
-}
+                    /* =============================================
+                       VALIDATION
+                    ============================================= */
 
-}
-);
+                    if (!name) {
 
+                        showError(
+                            "Please enter your full name."
+                        );
 
-// =====================================================
-// MULTER ERROR HANDLER
-// =====================================================
+                        return;
 
-app.use(
-(
-error,
-req,
-res,
-next
-) => {
+                    }
 
-if (
-error instanceof
-multer.MulterError
-) {
 
-return res.status(400).json({
+                    if (!email) {
 
-success: false,
+                        showError(
+                            "Please enter your email."
+                        );
 
-error:
-"Screenshot upload failed: " +
-error.message
+                        return;
 
-});
+                    }
 
-}
 
+                    if (!phone) {
 
-if (
-error &&
-(
-error.message ===
-"Only JPG, PNG and WEBP images are allowed." ||
+                        showError(
+                            "Please enter your phone number."
+                        );
 
-error.message ===
-"Only image files are allowed."
-)
-) {
+                        return;
 
-return res.status(400).json({
+                    }
 
-success: false,
 
-error:
-error.message
+                    const gameDetailsCard =
+                        document.getElementById(
+                            "game-details-card"
+                        );
 
-});
 
-}
+                    if (
+                        gameDetailsCard &&
+                        gameDetailsCard.style.display !==
+                        "none"
+                    ) {
 
+                        if (!playerId) {
 
-next(error);
+                            showError(
+                                "Please enter your Player ID / UID."
+                            );
 
-}
-);
+                            return;
 
+                        }
 
-// =====================================================
-// START SERVER
-// =====================================================
 
-const PORT =
-process.env.PORT || 3000;
+                        if (
+                            regionElement &&
+                            !region
+                        ) {
 
+                            showError(
+                                "Please enter your Region."
+                            );
 
-app.listen(
-PORT,
-() => {
+                            return;
 
-console.log(
-`TopUpMandu backend running on port ${PORT}`
-);
+                        }
 
-}
-);
+                    }
+
+
+                    if (!screenshot) {
+
+                        showError(
+                            "Please upload your payment screenshot."
+                        );
+
+                        return;
+
+                    }
+
+
+                    /* =============================================
+                       DISABLE BUTTON
+                    ============================================= */
+
+                    button.disabled =
+                        true;
+
+
+                    try {
+
+
+                        /* =========================================
+                           STEP 1
+                           UPLOAD SCREENSHOT TO CLOUDINARY
+                        ========================================= */
+
+                        button.textContent =
+                            "Uploading Payment...";
+
+
+                        setStatus(
+                            "Uploading your payment screenshot..."
+                        );
+
+
+                        const uploadForm =
+                            new FormData();
+
+
+                        uploadForm.append(
+                            "paymentScreenshot",
+                            screenshot
+                        );
+
+
+                        const uploadResponse =
+                            await fetch(
+                                BACKEND +
+                                "/upload-payment-screenshot",
+                                {
+
+                                    method:
+                                        "POST",
+
+                                    body:
+                                        uploadForm
+
+                                }
+                            );
+
+
+                        let uploadResult;
+
+
+                        try {
+
+                            uploadResult =
+                                await uploadResponse.json();
+
+                        }
+
+                        catch (jsonError) {
+
+                            throw new Error(
+                                "The screenshot upload server returned an invalid response."
+                            );
+
+                        }
+
+
+                        console.log(
+                            "Screenshot upload response:",
+                            uploadResult
+                        );
+
+
+                        if (
+                            !uploadResponse.ok ||
+                            !uploadResult.success
+                        ) {
+
+                            throw new Error(
+                                uploadResult.error ||
+                                "Payment screenshot upload failed."
+                            );
+
+                        }
+
+
+                        const paymentScreenshot =
+                            uploadResult.screenshotUrl;
+
+
+                        if (!paymentScreenshot) {
+
+                            throw new Error(
+                                "Screenshot uploaded but no Cloudinary URL was returned."
+                            );
+
+                        }
+
+
+                        console.log(
+                            "Cloudinary screenshot URL:",
+                            paymentScreenshot
+                        );
+
+
+                        /* =========================================
+                           STEP 2
+                           CREATE SHOPIFY ORDER
+                        ========================================= */
+
+                        button.textContent =
+                            "Creating Shopify Order...";
+
+
+                        setStatus(
+                            "Payment screenshot uploaded. Creating your Shopify order..."
+                        );
+
+
+                        /*
+                         * IMPORTANT:
+                         *
+                         * Your server.js /create-order
+                         * expects normal JSON.
+                         *
+                         * It does NOT have multer attached
+                         * to /create-order.
+                         *
+                         * Therefore we send JSON here.
+                         */
+
+                        const orderPayload = {
+
+                            customer: {
+
+                                name:
+                                    name,
+
+                                email:
+                                    email,
+
+                                phone:
+                                    phone
+
+                            },
+
+
+                            items:
+                                currentCart.items,
+
+
+                            playerId:
+                                playerId,
+
+
+                            region:
+                                region,
+
+
+                            paymentMethod:
+                                paymentMethod,
+
+
+                            paymentScreenshot:
+                                paymentScreenshot
+
+                        };
+
+
+                        console.log(
+                            "Sending order payload:",
+                            orderPayload
+                        );
+
+
+                        const orderResponse =
+                            await fetch(
+                                BACKEND +
+                                "/create-order",
+                                {
+
+                                    method:
+                                        "POST",
+
+                                    headers: {
+
+                                        "Content-Type":
+                                            "application/json"
+
+                                    },
+
+                                    body:
+                                        JSON.stringify(
+                                            orderPayload
+                                        )
+
+                                }
+                            );
+
+
+                        let orderResult;
+
+
+                        try {
+
+                            orderResult =
+                                await orderResponse.json();
+
+                        }
+
+                        catch (jsonError) {
+
+                            throw new Error(
+                                "The Shopify order server returned an invalid response."
+                            );
+
+                        }
+
+
+                        console.log(
+                            "Shopify order response:",
+                            orderResult
+                        );
+
+
+                        if (
+                            !orderResponse.ok ||
+                            !orderResult.success
+                        ) {
+
+                            let serverError =
+                                "Order creation failed.";
+
+
+                            if (
+                                orderResult.error
+                            ) {
+
+                                if (
+                                    typeof orderResult.error ===
+                                    "string"
+                                ) {
+
+                                    serverError =
+                                        orderResult.error;
+
+                                }
+
+                                else {
+
+                                    serverError =
+                                        JSON.stringify(
+                                            orderResult.error
+                                        );
+
+                                }
+
+                            }
+
+
+                            if (
+                                orderResult.errors
+                            ) {
+
+                                serverError =
+                                    JSON.stringify(
+                                        orderResult.errors
+                                    );
+
+                            }
+
+
+                            throw new Error(
+                                serverError
+                            );
+
+                        }
+
+
+                        /* =========================================
+                           SUCCESS
+                        ========================================= */
+
+                        button.textContent =
+                            "Order Created";
+
+
+                        button.disabled =
+                            true;
+
+
+                        hideStatus();
+
+
+                        const orderName =
+                            orderResult.order &&
+                                orderResult.order.name
+                                ? orderResult.order.name
+                                : "";
+
+
+                        let successHTML = `
+
+                    <strong>
+                        ✅ Order created successfully!
+                    </strong>
+
+                    <br>
+
+                    Your payment has been submitted.
+
+                `;
+
+
+                        if (orderName) {
+
+                            successHTML += `
+
+                        <div class="order-number">
+
+                            Order ${escapeHTML(
+                                orderName
+                            )}
+
+                        </div>
+
+                    `;
+
+                        }
+
+
+                        showSuccess(
+                            successHTML
+                        );
+
+
+                        console.log(
+                            "======================================"
+                        );
+
+
+                        console.log(
+                            "TOPUPMANDU ORDER SUCCESS"
+                        );
+
+
+                        console.log(
+                            "Shopify Order:",
+                            orderName
+                        );
+
+
+                        console.log(
+                            "Payment Screenshot:",
+                            paymentScreenshot
+                        );
+
+
+                        console.log(
+                            "======================================"
+                        );
+
+
+                    }
+
+
+                    catch (error) {
+
+                        console.error(
+                            "Order creation error:",
+                            error
+                        );
+
+
+                        button.disabled =
+                            false;
+
+
+                        button.textContent =
+                            "Place Order";
+
+
+                        hideStatus();
+
+
+                        showError(
+                            error.message ||
+                            "Something went wrong while creating your order."
+                        );
+
+                    }
+
+                }
+            );
+
+
+        /* =========================================================
+           START
+        ========================================================= */
+
+        initialize();
+
+        updatePaymentQR();
+
+
+    </script>
+
+
+</body>
+
+</html>
