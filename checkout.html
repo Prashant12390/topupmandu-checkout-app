@@ -1,1968 +1,1422 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>TopUpMandu Checkout</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f5f7fb;
-            color: #111827;
-        }
-
-        .header {
-            background: #ffffff;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 18px 20px;
-            text-align: center;
-            font-size: 22px;
-            font-weight: 700;
-            color: #1677ff;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 900px;
-            margin: auto;
-            padding: 24px 16px 50px;
-        }
-
-        .title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-
-        .card {
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 20px;
-            margin-bottom: 18px;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
-        }
-
-        .card h2 {
-            margin-top: 0;
-            font-size: 19px;
-        }
-
-        .product {
-            display: flex;
-            justify-content: space-between;
-            gap: 15px;
-            padding: 14px 0;
-            border-bottom: 1px solid #eeeeee;
-        }
-
-        .product:last-child {
-            border-bottom: 0;
-        }
-
-        .product-left {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            min-width: 0;
-        }
-
-        .product-image {
-            width: 58px;
-            height: 58px;
-            border-radius: 9px;
-            object-fit: cover;
-            background: #eef2f7;
-            flex-shrink: 0;
-        }
-
-        .product-name {
-            font-weight: 600;
-        }
-
-        .product-info {
-            color: #6b7280;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .product-price {
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 18px;
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 7px;
-        }
-
-        input[type="text"],
-        input[type="email"],
-        input[type="tel"],
-        input[type="file"] {
-
-            width: 100%;
-            padding: 13px;
-            border: 1px solid #d1d5db;
-            border-radius: 9px;
-            font-size: 15px;
-            outline: none;
-            margin-bottom: 15px;
-            background: #fff;
-        }
-
-        input:focus {
-            border-color: #1677ff;
-        }
-
-        .payment-option {
-
-            display: flex;
-            align-items: center;
-            border: 1px solid #d1d5db;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .payment-option:hover {
-            border-color: #1677ff;
-        }
-
-        .payment-option input {
-
-            width: auto;
-            margin: 0 8px 0 0;
-        }
-
-        .payment-option.selected {
-            border-color: #1677ff;
-            background: #eff6ff;
-        }
-
-        /* QR */
-
-        #payment-qr {
-            display: none;
-            text-align: center;
-            margin-top: 18px;
-            padding: 18px;
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-        }
-
-        #payment-qr h3 {
-            margin: 0 0 12px;
-            font-size: 17px;
-        }
-
-        #payment-qr img {
-            width: 260px;
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-            border: 1px solid #e5e7eb;
-            background: white;
-        }
-
-        .qr-note {
-            margin-top: 10px;
-            color: #6b7280;
-            font-size: 13px;
-        }
-
-        /* Screenshot */
-
-        .upload-box {
-            margin-top: 18px;
-            padding: 16px;
-            border: 1px dashed #9ca3af;
-            border-radius: 12px;
-            background: #f9fafb;
-        }
-
-        .upload-box strong {
-            display: block;
-            margin-bottom: 6px;
-        }
-
-        .upload-note {
-            color: #6b7280;
-            font-size: 13px;
-            margin-bottom: 12px;
-        }
-
-        .preview {
-            display: none;
-            margin-top: 12px;
-            text-align: center;
-        }
-
-        .preview img {
-            max-width: 260px;
-            max-height: 350px;
-            border-radius: 10px;
-            border: 1px solid #d1d5db;
-        }
-
-        .checkout-button {
-
-            width: 100%;
-            border: 0;
-            border-radius: 10px;
-            background: #1677ff;
-            color: white;
-            font-size: 17px;
-            font-weight: 700;
-            padding: 16px;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-
-        .checkout-button:hover {
-            background: #0868ed;
-        }
-
-        .checkout-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .error {
-
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 14px;
-            border-radius: 10px;
-            margin-bottom: 18px;
-            display: none;
-        }
-
-        .success {
-
-            background: #dcfce7;
-            color: #166534;
-            padding: 14px;
-            border-radius: 10px;
-            margin-bottom: 18px;
-            display: none;
-        }
-
-        .empty {
-            text-align: center;
-            padding: 40px 10px;
-            color: #6b7280;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 30px 10px;
-            color: #6b7280;
-        }
-
-        .required {
-            color: #dc2626;
-        }
-
-        @media (max-width: 600px) {
-
-            .container {
-                padding: 18px 12px 40px;
-            }
-
-            .title {
-                font-size: 23px;
-            }
+const express = require("express");
+const path = require("path");
+const crypto = require("crypto");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
 
-            .card {
-                padding: 16px;
-            }
+const app = express();
 
-            .product {
-                align-items: flex-start;
-            }
 
-            .product-image {
-                width: 50px;
-                height: 50px;
-            }
+// =====================================================
+// CLOUDINARY
+// =====================================================
 
-            .product-price {
-                font-size: 14px;
-            }
+cloudinary.config({
+cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+api_key: process.env.CLOUDINARY_API_KEY,
+api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-            #payment-qr img {
-                width: 230px;
-            }
 
-        }
-    </style>
+// =====================================================
+// PAYMENT SCREENSHOT UPLOAD
+// =====================================================
 
-</head>
+const upload = multer({
 
+storage: multer.memoryStorage(),
 
-<body>
+limits: {
+fileSize: 5 * 1024 * 1024
+},
 
+fileFilter: (req, file, cb) => {
 
-    <div class="header">
-        TopUpMandu
-    </div>
+if (
+file.mimetype === "image/jpeg" ||
+file.mimetype === "image/png" ||
+file.mimetype === "image/webp"
+) {
 
+cb(null, true);
 
-    <main class="container">
+} else {
 
+cb(
+new Error(
+"Only JPG, PNG and WEBP images are allowed."
+)
+);
 
-        <div class="title">
-            Checkout
-        </div>
+}
 
+}
 
-        <div id="error" class="error"></div>
+});
 
-        <div id="success" class="success"></div>
 
+// =====================================================
+// EXPRESS
+// =====================================================
 
-        <!-- ==========================================
-             ORDER
-        =========================================== -->
+app.use(
+express.json({
+limit: "1mb"
+})
+);
 
-        <div class="card">
+app.use(
+express.urlencoded({
+extended: true
+})
+);
 
-            <h2>
-                🛒 Your Order
-            </h2>
+app.use(
+express.static(__dirname)
+);
 
-            <div id="cart-items">
 
-                <div class="loading">
-                    Loading your cart...
-                </div>
+// =====================================================
+// ENVIRONMENT VARIABLES
+// =====================================================
 
-            </div>
+const SHOPIFY_SHOP =
+process.env.SHOPIFY_SHOP;
 
+const SHOPIFY_CLIENT_ID =
+process.env.SHOPIFY_CLIENT_ID;
 
-            <div class="total-row">
+const SHOPIFY_CLIENT_SECRET =
+process.env.SHOPIFY_CLIENT_SECRET;
 
-                <span>
-                    Total
-                </span>
 
-                <span id="cart-total">
-                    Rs. 0.00
-                </span>
+// =====================================================
+// TEMPORARY CART STORAGE
+// =====================================================
 
-            </div>
+const carts = new Map();
 
-        </div>
 
+// =====================================================
+// HOME
+// =====================================================
 
-        <!-- ==========================================
-             CUSTOMER DETAILS
-        =========================================== -->
+app.get("/", (req, res) => {
 
-        <div class="card">
+res.send(
+"TopUpMandu Custom Checkout Backend is running!"
+);
 
-            <h2>
-                👤 Customer Details
-            </h2>
+});
 
 
-            <label for="name">
-                Full Name
-            </label>
+// =====================================================
+// CHECKOUT PAGE
+// =====================================================
 
-            <input type="text" id="name" placeholder="Enter your full name">
+app.get("/checkout", (req, res) => {
 
+res.sendFile(
+path.join(
+__dirname,
+"checkout.html"
+)
+);
 
-            <label for="email">
-                Email
-            </label>
+});
 
-            <input type="email" id="email" placeholder="Enter your email">
 
+// =====================================================
+// SHOPIFY TOKEN
+// =====================================================
 
-            <label for="phone">
-                Phone Number
-            </label>
+async function getShopifyToken() {
 
-            <input type="tel" id="phone" placeholder="98XXXXXXXX">
+if (
+!SHOPIFY_SHOP ||
+!SHOPIFY_CLIENT_ID ||
+!SHOPIFY_CLIENT_SECRET
+) {
 
-        </div>
+throw new Error(
+"Shopify environment variables are missing."
+);
 
+}
 
-        <!-- ==========================================
-             GAME DETAILS
-        =========================================== -->
 
-        <div class="card" id="game-details-card" style="display:none;">
+const response =
+await fetch(
 
-            <h2>
-                🎮 Game Details
-            </h2>
+`https://${SHOPIFY_SHOP}.myshopify.com/admin/oauth/access_token`,
 
-            <div id="game-fields"></div>
+{
 
-        </div>
+method: "POST",
 
+headers: {
 
-        <!-- ==========================================
-             PAYMENT
-        =========================================== -->
+"Content-Type":
+"application/json"
 
-        <div class="card">
+},
 
-            <h2>
-                💳 Payment Method
-            </h2>
+body:
+JSON.stringify({
 
+client_id:
+SHOPIFY_CLIENT_ID,
 
-            <label class="payment-option" id="esewa-option">
+client_secret:
+SHOPIFY_CLIENT_SECRET,
 
-                <input type="radio" name="payment" value="esewa" checked>
+grant_type:
+"client_credentials"
 
-                <span>
-                    eSewa
-                </span>
+})
 
-            </label>
+}
 
+);
 
-            <label class="payment-option" id="khalti-option">
 
-                <input type="radio" name="payment" value="khalti">
+const data =
+await response.json();
 
-                <span>
-                    Khalti
-                </span>
 
-            </label>
+if (!response.ok) {
 
+throw new Error(
 
-            <!-- QR CODE -->
+data.error_description ||
+data.error ||
+"Could not get Shopify access token"
 
-            <div id="payment-qr">
+);
 
-                <h3 id="qr-title">
-                    Scan to Pay with eSewa
-                </h3>
+}
 
-                <img id="payment-qr-image" src="" alt="Payment QR Code">
 
-                <div class="qr-note">
-                    Scan this QR code and complete your payment.
-                </div>
+return data.access_token;
 
-            </div>
+}
 
 
-            <!-- ==========================================
-                 PAYMENT SCREENSHOT
-            =========================================== -->
+// =====================================================
+// TEST SHOPIFY
+// =====================================================
 
-            <div class="upload-box">
+app.get(
+"/test-shopify",
+async (req, res) => {
 
-                <strong>
-                    📸 Payment Screenshot
-                    <span class="required">*</span>
-                </strong>
+try {
 
-                <div class="upload-note">
-                    After completing your payment, upload the payment screenshot here.
-                </div>
+await getShopifyToken();
 
 
-                <input type="file" id="paymentScreenshot" accept="image/jpeg,image/png,image/webp">
+res.json({
 
+success: true,
 
-                <div id="screenshot-preview" class="preview">
+message:
+"Successfully connected to Shopify!"
 
-                    <img id="preview-image" src="" alt="Payment Screenshot Preview">
+});
 
-                </div>
+} catch (error) {
 
-            </div>
+console.error(error);
 
 
-            <button id="place-order" class="checkout-button">
-                Place Order
-            </button>
+res.status(500).json({
 
-        </div>
+success: false,
 
+error:
+error.message
 
-    </main>
+});
 
+}
 
-    <script>
+}
+);
 
 
-        /* ==========================================
-           BACKEND
-        =========================================== */
+// =====================================================
+// SAVE CART
+// =====================================================
 
-        const BACKEND =
-            "https://topupmandu-checkout-app.vercel.app";
+app.post(
+"/cart",
+(req, res) => {
 
+try {
 
-        /* ==========================================
-           QR CODES
-        =========================================== */
+const cart =
+req.body;
 
-        const ESEWA_QR =
-            "https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.48_PM.jpg?v=1787933542";
 
+if (
+!cart ||
+!Array.isArray(cart.items)
+) {
 
-        const KHALTI_QR =
-            "https://cdn.shopify.com/s/files/1/0807/1639/8824/files/WhatsApp_Image_2026-08-28_at_9.07.35_PM.jpg?v=1787933542";
+return res.status(400).json({
 
+success: false,
 
-        /* ==========================================
-           GAME PRODUCTS
-        =========================================== */
+error:
+"Invalid cart data."
 
-        const gameProductHandles = [
+});
 
-            "free-fire-diamonds",
-            "pubg-uc",
-            "clash-of-clans",
-            "valorant-ios-only",
-            "efootball-pes-2026",
-            "genshin-impact",
-            "brawl-stars",
-            "roblox",
-            "mobile-legends"
+}
 
-        ];
 
+if (
+cart.items.length === 0
+) {
 
-        const gameProductTitles = [
+return res.status(400).json({
 
-            "Free Fire",
-            "Free Fire Diamond",
-            "PUBG",
-            "PUBG UC",
-            "Clash of Clans",
-            "Valorant",
-            "eFootball",
-            "Genshin Impact",
-            "Brawl Stars",
-            "Roblox",
-            "Mobile Legends"
+success: false,
 
-        ];
+error:
+"Cart is empty."
 
+});
 
-        /* ==========================================
-           GET CART
-        ========================================== */
+}
 
-        function getEncodedCart() {
 
-            const params =
-                new URLSearchParams(
-                    window.location.search
-                );
+const cartId =
+crypto.randomUUID();
 
-            return params.get("cart");
 
-        }
+carts.set(
 
+cartId,
 
-        /* ==========================================
-           DECODE CART
-        ========================================== */
+{
 
-        function getCartFromURL() {
+cart: cart,
 
-            const encodedCart =
-                getEncodedCart();
+createdAt:
+Date.now()
 
+}
 
-            if (!encodedCart) {
+);
 
-                throw new Error(
-                    "No cart data was provided in the URL."
-                );
 
-            }
+// Remove carts older than 30 minutes
 
+for (
+const [
+id,
+stored
+]
+of carts.entries()
+) {
 
-            try {
+if (
+Date.now() -
+stored.createdAt >
+30 * 60 * 1000
+) {
 
-                /*
-                 * Support normal Base64 and
-                 * URL-safe Base64.
-                 */
+carts.delete(id);
 
-                let base64 =
-                    encodedCart
-                        .replace(/-/g, "+")
-                        .replace(/_/g, "/");
+}
 
+}
 
-                /*
-                 * Add missing padding.
-                 */
 
-                while (
-                    base64.length % 4 !== 0
-                ) {
+res.json({
 
-                    base64 += "=";
+success: true,
 
-                }
+cartId:
+cartId
 
+});
 
-                const binaryString =
-                    atob(base64);
+} catch (error) {
 
+console.error(error);
 
-                const bytes =
-                    Uint8Array.from(
-                        binaryString,
-                        function (character) {
 
-                            return character.charCodeAt(0);
+res.status(500).json({
 
-                        }
-                    );
+success: false,
 
+error:
+error.message
 
-                const jsonString =
-                    new TextDecoder("utf-8")
-                        .decode(bytes);
+});
 
+}
 
-                const cart =
-                    JSON.parse(jsonString);
+}
+);
 
 
-                return cart;
+// =====================================================
+// GET CART
+// =====================================================
 
-            } catch (error) {
+app.get(
+"/cart/:cartId",
+(req, res) => {
 
-                console.error(
-                    "Cart decoding error:",
-                    error
-                );
+try {
 
+const stored =
+carts.get(
+req.params.cartId
+);
 
-                throw new Error(
-                    "The cart data could not be read."
-                );
 
-            }
+if (!stored) {
 
-        }
+return res.status(404).json({
 
+success: false,
 
-        /* ==========================================
-           MONEY
-        ========================================== */
+error:
+"Cart not found or expired."
 
-        function formatMoney(cents) {
+});
 
-            const amount =
-                Number(cents || 0) / 100;
+}
 
 
-            return "Rs. " +
-                amount.toLocaleString(
-                    "en-NP",
-                    {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }
-                );
+if (
+Date.now() -
+stored.createdAt >
+30 * 60 * 1000
+) {
 
-        }
+carts.delete(
+req.params.cartId
+);
 
 
-        /* ==========================================
-           ESCAPE HTML
-        ========================================== */
+return res.status(404).json({
 
-        function escapeHTML(value) {
+success: false,
 
-            const div =
-                document.createElement("div");
+error:
+"Cart has expired."
 
+});
 
-            div.textContent =
-                value == null
-                    ? ""
-                    : String(value);
+}
 
 
-            return div.innerHTML;
+res.json({
 
-        }
+success: true,
 
+cart:
+stored.cart
 
-        /* ==========================================
-           CURRENT CART
-        ========================================== */
+});
 
-        let currentCart = null;
+} catch (error) {
 
+console.error(error);
 
-        /* ==========================================
-           CHECK IF GAME PRODUCT
-        ========================================== */
 
-        function isGameProduct(item) {
+res.status(500).json({
 
-            const title =
-                (
-                    item.title ||
-                    item.product_title ||
-                    ""
-                ).toLowerCase();
+success: false,
 
+error:
+error.message
 
-            if (
-                gameProductTitles.some(
-                    function (game) {
+});
 
-                        return title.includes(
-                            game.toLowerCase()
-                        );
+}
 
-                    }
-                )
-            ) {
+}
+);
 
-                return true;
 
-            }
+// =====================================================
+// UPLOAD PAYMENT SCREENSHOT
+// =====================================================
 
+app.post(
+"/upload-payment-screenshot",
+upload.single("paymentScreenshot"),
+async (req, res) => {
 
-            if (
-                item.handle &&
-                gameProductHandles.includes(
-                    item.handle
-                )
-            ) {
+try {
 
-                return true;
+if (!req.file) {
 
-            }
+return res.status(400).json({
 
+success: false,
 
-            return false;
+error:
+"Payment screenshot is required."
 
-        }
+});
 
+}
 
-        /* ==========================================
-           DISPLAY GAME FIELDS
-        ========================================== */
 
-        function displayGameFields(cart) {
+const uploadResult =
+await new Promise(
+(resolve, reject) => {
 
-            const card =
-                document.getElementById(
-                    "game-details-card"
-                );
+const stream =
+cloudinary.uploader.upload_stream(
 
+{
 
-            const fields =
-                document.getElementById(
-                    "game-fields"
-                );
+folder:
+"topupmandu/payment-screenshots",
 
+resource_type:
+"image"
 
-            if (!card || !fields) {
-                return;
-            }
+},
 
+(
+error,
+result
+) => {
 
-            const gameItem =
-                cart.items.find(
-                    function (item) {
+if (error) {
 
-                        return isGameProduct(item);
+reject(error);
 
-                    }
-                );
+} else {
 
+resolve(result);
 
-            if (!gameItem) {
+}
 
-                card.style.display =
-                    "none";
+}
 
-                fields.innerHTML =
-                    "";
+);
 
-                return;
 
-            }
+stream.end(
+req.file.buffer
+);
 
+}
+);
 
-            card.style.display =
-                "block";
 
+res.json({
 
-            const title =
-                (
-                    gameItem.title ||
-                    gameItem.product_title ||
-                    ""
-                ).toLowerCase();
+success: true,
 
+screenshotUrl:
+uploadResult.secure_url
 
-            /*
-             * MOBILE LEGENDS
-             * UID + REGION
-             */
+});
 
-            if (
-                title.includes(
-                    "mobile legends"
-                )
-            ) {
+} catch (error) {
 
-                fields.innerHTML = `
+console.error(
+"Screenshot upload error:",
+error
+);
 
-                    <label for="player-id">
-                        UID <span class="required">*</span>
-                    </label>
 
-                    <input
-                        type="text"
-                        id="player-id"
-                        placeholder="Enter your Mobile Legends UID"
-                        autocomplete="off"
-                    >
+res.status(500).json({
 
+success: false,
 
-                    <label for="region">
-                        Region <span class="required">*</span>
-                    </label>
+error:
+error.message
 
-                    <input
-                        type="text"
-                        id="region"
-                        placeholder="Enter your Region"
-                        autocomplete="off"
-                    >
+});
 
-                `;
+}
 
-            }
+}
+);
 
-            /*
-             * ALL OTHER GAMES
-             */
 
-            else {
+// =====================================================
+// CREATE SHOPIFY ORDER
+// =====================================================
 
-                fields.innerHTML = `
+app.post(
+"/create-order",
+async (req, res) => {
 
-                    <label for="player-id">
-                        Player ID / UID
-                        <span class="required">*</span>
-                    </label>
+try {
 
-                    <input
-                        type="text"
-                        id="player-id"
-                        placeholder="Enter your Player ID / UID"
-                        autocomplete="off"
-                    >
+console.log(
+"======================================"
+);
 
-                `;
+console.log(
+"TOPUPMANDU CREATE ORDER"
+);
 
-            }
+console.log(
+"======================================"
+);
 
-        }
 
+// =================================================
+// READ REQUEST
+// =================================================
 
-        /* ==========================================
-           DISPLAY CART
-        ========================================== */
+let {
+customer,
+items,
+playerId,
+region,
+paymentMethod,
+paymentScreenshot
+} = req.body;
 
-        function displayCart(cart) {
 
-            const container =
-                document.getElementById(
-                    "cart-items"
-                );
+// =================================================
+// PARSE CUSTOMER / ITEMS IF SENT AS STRINGS
+// =================================================
 
+let parsedCustomer =
+customer;
 
-            const total =
-                document.getElementById(
-                    "cart-total"
-                );
+let parsedItems =
+items;
 
 
-            if (
-                !cart ||
-                !Array.isArray(cart.items) ||
-                cart.items.length === 0
-            ) {
+try {
 
-                container.innerHTML = `
+if (
+typeof customer ===
+"string"
+) {
 
-                    <div class="empty">
-                        Your cart is empty.
-                    </div>
+parsedCustomer =
+JSON.parse(customer);
 
-                `;
+}
 
 
-                total.textContent =
-                    "Rs. 0.00";
+if (
+typeof items ===
+"string"
+) {
 
+parsedItems =
+JSON.parse(items);
 
-                return;
+}
 
-            }
+} catch (error) {
 
+return res.status(400).json({
 
-            let html = "";
+success: false,
 
+error:
+"Invalid customer or cart data."
 
-            cart.items.forEach(
-                function (item) {
+});
 
+}
 
-                    const title =
-                        item.title ||
-                        item.product_title ||
-                        "Product";
 
+// =================================================
+// VALIDATE ITEMS
+// =================================================
 
-                    const variant =
-                        item.variant_title &&
-                            item.variant_title !==
-                            "Default Title"
+if (
+!parsedItems ||
+!Array.isArray(parsedItems) ||
+parsedItems.length === 0
+) {
 
-                            ? item.variant_title
+return res.status(400).json({
 
-                            : "";
+success: false,
 
+error:
+"Cart items are required."
 
-                    const quantity =
-                        Number(
-                            item.quantity || 1
-                        );
+});
 
+}
 
-                    const linePrice =
-                        item.final_line_price != null
 
-                            ? Number(
-                                item.final_line_price
-                            )
+// =================================================
+// CUSTOMER VALUES
+// =================================================
 
-                            : item.line_price != null
+const customerName =
+String(
+parsedCustomer?.name ||
+""
+).trim();
 
-                                ? Number(
-                                    item.line_price
-                                )
 
-                                : Number(
-                                    item.final_price ||
-                                    item.price ||
-                                    0
-                                ) * quantity;
+const customerEmail =
+String(
+parsedCustomer?.email ||
+""
+).trim();
 
 
-                    const image =
-                        item.image
-                            ? `
+const customerPhone =
+String(
+parsedCustomer?.phone ||
+""
+).trim();
 
-                                <img
-                                    class="product-image"
-                                    src="${escapeHTML(
-                                item.image
-                            )}"
-                                    alt="${escapeHTML(
-                                title
-                            )}"
-                                >
 
-                              `
-                            : "";
+// =================================================
+// SPLIT CUSTOMER NAME
+// =================================================
 
+let firstName =
+customerName;
 
-                    html += `
+let lastName =
+"";
 
-                        <div class="product">
 
-                            <div class="product-left">
+if (customerName.includes(" ")) {
 
-                                ${image}
+const nameParts =
+customerName.split(
+/\s+/
+);
 
-                                <div>
 
-                                    <div class="product-name">
+firstName =
+nameParts.shift();
 
-                                        ${escapeHTML(
-                        title
-                    )}
 
-                                    </div>
+lastName =
+nameParts.join(" ");
 
+}
 
-                                    <div class="product-info">
 
-                                        ${variant
-                            ? escapeHTML(
-                                variant
-                            ) + " · "
-                            : ""
-                        }
+// =================================================
+// SHOPIFY TOKEN
+// =================================================
 
-                                        Quantity:
-                                        ${quantity}
+const accessToken =
+await getShopifyToken();
 
-                                    </div>
 
-                                </div>
+// =================================================
+// SHOPIFY LINE ITEMS
+// =================================================
 
-                            </div>
+const lineItems =
+parsedItems.map(
+(item) => {
 
+const variantId =
+item.variant_id ||
+item.variantId;
 
-                            <div class="product-price">
 
-                                ${formatMoney(
-                            linePrice
-                        )}
+if (!variantId) {
 
-                            </div>
+throw new Error(
+"Cart item is missing variant_id."
+);
 
-                        </div>
+}
 
-                    `;
 
-                }
-            );
+const variantGid =
+String(
+variantId
+).startsWith(
+"gid://"
+)
 
+? String(
+variantId
+)
 
-            container.innerHTML =
-                html;
+: `gid://shopify/ProductVariant/${variantId}`;
 
 
-            /*
-             * Calculate total safely.
-             */
+// -----------------------------------------
+// PRODUCT-SPECIFIC PROPERTIES
+// -----------------------------------------
 
-            let totalCents =
-                Number(
-                    cart.total_price
-                );
+const properties = [];
 
 
-            if (
-                !Number.isFinite(
-                    totalCents
-                )
-            ) {
+/*
+* Keep the properties that came from the
+* Shopify cart item.
+*
+* This means products can have their own
+* Player ID / Region / Package information.
+*/
 
-                totalCents =
-                    cart.items.reduce(
-                        function (sum, item) {
+if (
+item.properties &&
+typeof item.properties === "object"
+) {
 
-                            const quantity =
-                                Number(
-                                    item.quantity || 1
-                                );
+for (
+const [
+key,
+value
+]
+of Object.entries(
+item.properties
+)
+) {
 
+if (
+value !== null &&
+value !== undefined &&
+String(value).trim() !== ""
+) {
 
-                            const price =
-                                Number(
-                                    item.final_price ||
-                                    item.price ||
-                                    0
-                                );
+properties.push({
 
+name:
+String(key),
 
-                            return sum +
-                                (
-                                    price *
-                                    quantity
-                                );
+value:
+String(value)
 
-                        },
-                        0
-                    );
+});
 
-            }
+}
 
+}
 
-            total.textContent =
-                formatMoney(
-                    totalCents
-                );
+}
 
 
-            displayGameFields(
-                cart
-            );
+/*
+* If the checkout sends Player ID or Region
+* separately, add them only when they aren't
+* already present in the product properties.
+*/
 
-        }
+const hasPlayerId =
+properties.some(
+property =>
+property.name
+.toLowerCase()
+.replace(/\s+/g, "")
+===
+"playerid"
+);
 
 
-        /* ==========================================
-           PAYMENT QR
-        ========================================== */
+const hasRegion =
+properties.some(
+property =>
+property.name
+.toLowerCase()
+.replace(/\s+/g, "")
+===
+"region"
+);
 
-        function updatePaymentQR() {
 
-            const selected =
-                document.querySelector(
-                    'input[name="payment"]:checked'
-                );
+if (
+playerId &&
+!hasPlayerId
+) {
 
+properties.push({
 
-            const qrBox =
-                document.getElementById(
-                    "payment-qr"
-                );
+name:
+"Player ID",
 
+value:
+String(
+playerId
+)
 
-            const qrImage =
-                document.getElementById(
-                    "payment-qr-image"
-                );
+});
 
+}
 
-            const qrTitle =
-                document.getElementById(
-                    "qr-title"
-                );
 
+if (
+region &&
+!hasRegion
+) {
 
-            const esewaOption =
-                document.getElementById(
-                    "esewa-option"
-                );
+properties.push({
 
+name:
+"Region",
 
-            const khaltiOption =
-                document.getElementById(
-                    "khalti-option"
-                );
+value:
+String(
+region
+)
 
+});
 
-            if (!selected) {
+}
 
-                qrBox.style.display =
-                    "none";
 
-                return;
+// -----------------------------------------
+// PAYMENT METHOD
+// -----------------------------------------
 
-            }
+if (paymentMethod) {
 
+properties.push({
 
-            /*
-             * eSewa
-             */
+name:
+"Payment Method",
 
-            if (
-                selected.value ===
-                "esewa"
-            ) {
+value:
+String(
+paymentMethod
+)
 
-                qrImage.src =
-                    ESEWA_QR;
+});
 
+}
 
-                qrTitle.textContent =
-                    "Scan to Pay with eSewa";
 
+// -----------------------------------------
+// CREATE LINE ITEM
+// -----------------------------------------
 
-                qrBox.style.display =
-                    "block";
+const lineItem = {
 
+variantId:
+variantGid,
 
-                esewaOption.classList.add(
-                    "selected"
-                );
+quantity:
+Number(
+item.quantity
+) || 1
 
+};
 
-                khaltiOption.classList.remove(
-                    "selected"
-                );
 
-            }
+if (
+properties.length > 0
+) {
 
+lineItem.properties =
+properties;
 
-            /*
-             * Khalti
-             */
+}
 
-            else if (
-                selected.value ===
-                "khalti"
-            ) {
 
-                qrImage.src =
-                    KHALTI_QR;
+return lineItem;
 
+}
+);
 
-                qrTitle.textContent =
-                    "Scan to Pay with Khalti";
 
+// =================================================
+// ORDER CUSTOM ATTRIBUTES
+// =================================================
 
-                qrBox.style.display =
-                    "block";
+const attributes = [];
 
 
-                khaltiOption.classList.add(
-                    "selected"
-                );
+// Payment Method
 
+if (paymentMethod) {
 
-                esewaOption.classList.remove(
-                    "selected"
-                );
+attributes.push({
 
-            }
+key:
+"Payment Method",
 
-        }
+value:
+String(
+paymentMethod
+)
 
+});
 
-        /* ==========================================
-           SCREENSHOT PREVIEW
-        ========================================== */
+}
 
-        document
-            .getElementById(
-                "paymentScreenshot"
-            )
-            .addEventListener(
-                "change",
-                function () {
 
-                    const file =
-                        this.files[0];
+// Payment Screenshot
 
+if (paymentScreenshot) {
 
-                    const preview =
-                        document.getElementById(
-                            "screenshot-preview"
-                        );
+attributes.push({
 
+key:
+"Payment Screenshot",
 
-                    const previewImage =
-                        document.getElementById(
-                            "preview-image"
-                        );
+value:
+String(
+paymentScreenshot
+)
 
+});
 
-                    if (!file) {
+}
 
-                        preview.style.display =
-                            "none";
 
-                        previewImage.src =
-                            "";
+// =================================================
+// SHOPIFY ORDER
+// =================================================
 
-                        return;
+const mutation = `
 
-                    }
+mutation CreateOrder(
+$order: OrderCreateOrderInput!
+) {
 
+orderCreate(
+order: $order
+) {
 
-                    /*
-                     * Maximum 5 MB
-                     */
+userErrors {
 
-                    if (
-                        file.size >
-                        5 * 1024 * 1024
-                    ) {
+field
 
-                        this.value =
-                            "";
+message
 
+}
 
-                        preview.style.display =
-                            "none";
+order {
 
+id
 
-                        showError(
-                            "Payment screenshot must be smaller than 5 MB."
-                        );
+name
 
+displayFinancialStatus
 
-                        return;
+}
 
-                    }
+}
 
+}
 
-                    /*
-                     * Images only
-                     */
+`;
 
-                    if (
-                        !file.type.startsWith(
-                            "image/"
-                        )
-                    ) {
 
-                        this.value =
-                            "";
+// =================================================
+// BUILD ORDER
+// =================================================
 
+const order = {
 
-                        preview.style.display =
-                            "none";
+lineItems:
+lineItems,
 
+/*
+* Clean note.
+*
+* Customer name, payment method,
+* screenshot and player information
+* are no longer duplicated here.
+*/
 
-                        showError(
-                            "Please upload an image file."
-                        );
+note:
+"TopUpMandu Custom Checkout",
 
+tags: [
+"TopUpMandu",
+"Custom Checkout"
+]
 
-                        return;
+};
 
-                    }
 
+// =================================================
+// CUSTOMER EMAIL
+// =================================================
 
-                    const reader =
-                        new FileReader();
+if (customerEmail) {
 
+order.email =
+customerEmail;
 
-                    reader.onload =
-                        function (event) {
+}
 
-                            previewImage.src =
-                                event.target.result;
 
+// =================================================
+// CUSTOMER PHONE
+// =================================================
 
-                            preview.style.display =
-                                "block";
+if (customerPhone) {
 
-                        };
+order.phone =
+customerPhone;
 
+}
 
-                    reader.readAsDataURL(
-                        file
-                    );
 
-                }
-            );
+// =================================================
+// CUSTOMER
+// =================================================
 
+if (
+customerName ||
+customerEmail ||
+customerPhone
+) {
 
-        /* ==========================================
-           PAYMENT CHANGE
-        ========================================== */
+order.customer = {
 
-        document
-            .querySelectorAll(
-                'input[name="payment"]'
-            )
-            .forEach(
-                function (radio) {
+toUpsert: {
 
-                    radio.addEventListener(
-                        "change",
-                        updatePaymentQR
-                    );
+...(customerEmail
+? {
+email:
+customerEmail
+}
+: {}),
 
-                }
-            );
+...(customerPhone
+? {
+phone:
+customerPhone
+}
+: {}),
 
+...(firstName
+? {
+firstName:
+firstName
+}
+: {}),
 
-        /* ==========================================
-           ERROR
-        ========================================== */
+...(lastName
+? {
+lastName:
+lastName
+}
+: {})
 
-        function showError(message) {
+}
 
-            const errorBox =
-                document.getElementById(
-                    "error"
-                );
+};
 
+}
 
-            errorBox.textContent =
-                message;
 
+// =================================================
+// CUSTOM ATTRIBUTES
+// =================================================
 
-            errorBox.style.display =
-                "block";
+if (
+attributes.length > 0
+) {
 
+order.customAttributes =
+attributes;
 
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
+}
 
-        }
 
+// =================================================
+// DEBUG LOG
+// =================================================
 
-        /* ==========================================
-           SUCCESS
-        ========================================== */
+console.log(
+"Shopify order payload:"
+);
 
-        function showSuccess(message) {
+console.log(
+JSON.stringify(
+order,
+null,
+2
+)
+);
 
-            const successBox =
-                document.getElementById(
-                    "success"
-                );
 
+// =================================================
+// SEND TO SHOPIFY
+// =================================================
 
-            successBox.textContent =
-                message;
+const response =
+await fetch(
 
+`https://${SHOPIFY_SHOP}.myshopify.com/admin/api/2026-07/graphql.json`,
 
-            successBox.style.display =
-                "block";
+{
 
+method:
+"POST",
 
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
+headers: {
 
-        }
+"Content-Type":
+"application/json",
 
+"X-Shopify-Access-Token":
+accessToken
 
-        /* ==========================================
-           INITIALIZE
-        ========================================== */
+},
 
-        function initialize() {
+body:
+JSON.stringify({
 
-            try {
+query:
+mutation,
 
-                console.log(
-                    "TopUpMandu: Reading cart..."
-                );
+variables: {
 
+order:
+order
 
-                currentCart =
-                    getCartFromURL();
+}
 
+})
 
-                console.log(
-                    "TopUpMandu cart:",
-                    currentCart
-                );
+}
 
+);
 
-                displayCart(
-                    currentCart
-                );
 
+const result =
+await response.json();
 
-                /*
-                 * Show eSewa QR by default.
-                 */
 
-                updatePaymentQR();
+console.log(
+"Shopify response:"
+);
 
+console.log(
+JSON.stringify(
+result,
+null,
+2
+)
+);
 
-            } catch (error) {
 
-                console.error(
-                    "TopUpMandu cart error:",
-                    error
-                );
+// =================================================
+// GRAPHQL ERRORS
+// =================================================
 
+if (
+result.errors
+) {
 
-                document.getElementById(
-                    "cart-items"
-                ).innerHTML = `
+return res.status(500).json({
 
-                    <div class="empty">
+success: false,
 
-                        Your cart could not be loaded.
+error:
+result.errors
 
-                        <br><br>
+});
 
-                        <small>
-                            ${escapeHTML(
-                    error.message
-                )}
-                        </small>
+}
 
-                    </div>
 
-                `;
+// =================================================
+// ORDER RESULT
+// =================================================
 
+const orderResult =
+result.data?.orderCreate;
 
-                document.getElementById(
-                    "cart-total"
-                ).textContent =
-                    "Rs. 0.00";
 
+if (
+!orderResult
+) {
 
-                showError(
-                    error.message
-                );
+return res.status(500).json({
 
-            }
+success: false,
 
-        }
+error:
+"Shopify did not return an order."
 
+});
 
-        /* ==========================================
-           START
-        ========================================== */
+}
 
-        initialize();
 
+// =================================================
+// SHOPIFY USER ERRORS
+// =================================================
 
-        /* ==========================================
-           PLACE ORDER
-        ========================================== */
+if (
+orderResult.userErrors &&
+orderResult.userErrors.length > 0
+) {
 
-        document
-            .getElementById(
-                "place-order"
-            )
-            .addEventListener(
-                "click",
-                async function () {
+return res.status(400).json({
 
+success: false,
 
-                    const errorBox =
-                        document.getElementById(
-                            "error"
-                        );
+errors:
+orderResult.userErrors
 
+});
 
-                    const successBox =
-                        document.getElementById(
-                            "success"
-                        );
+}
 
 
-                    const button =
-                        document.getElementById(
-                            "place-order"
-                        );
+// =================================================
+// SUCCESS
+// =================================================
 
+console.log(
+"======================================"
+);
 
-                    errorBox.style.display =
-                        "none";
+console.log(
+"ORDER CREATED SUCCESSFULLY"
+);
 
+console.log(
+"Order:",
+orderResult.order?.name
+);
 
-                    successBox.style.display =
-                        "none";
+console.log(
+"======================================"
+);
 
 
-                    if (!currentCart) {
+res.json({
 
-                        showError(
-                            "Your cart could not be loaded."
-                        );
+success:
+true,
 
-                        return;
+message:
+"Order created successfully!",
 
-                    }
+screenshotUrl:
+paymentScreenshot ||
+null,
 
+order:
+orderResult.order
 
-                    /* ==================================
-                       CUSTOMER
-                    ================================== */
+});
 
-                    const name =
-                        document.getElementById(
-                            "name"
-                        ).value.trim();
 
+} catch (error) {
 
-                    const email =
-                        document.getElementById(
-                            "email"
-                        ).value.trim();
+console.error(
+"======================================"
+);
 
+console.error(
+"CREATE ORDER ERROR:"
+);
 
-                    const phone =
-                        document.getElementById(
-                            "phone"
-                        ).value.trim();
+console.error(
+error
+);
 
+console.error(
+"======================================"
+);
 
-                    /* ==================================
-                       GAME DETAILS
-                    ================================== */
 
-                    const playerElement =
-                        document.getElementById(
-                            "player-id"
-                        );
+res.status(500).json({
 
+success: false,
 
-                    const regionElement =
-                        document.getElementById(
-                            "region"
-                        );
+error:
+error.message
 
+});
 
-                    const playerId =
-                        playerElement
-                            ? playerElement.value.trim()
-                            : "";
+}
 
+}
+);
 
-                    const region =
-                        regionElement
-                            ? regionElement.value.trim()
-                            : "";
 
+// =====================================================
+// MULTER ERROR HANDLER
+// =====================================================
 
-                    const gameCard =
-                        document.getElementById(
-                            "game-details-card"
-                        );
+app.use(
+(
+error,
+req,
+res,
+next
+) => {
 
+if (
+error instanceof
+multer.MulterError
+) {
 
-                    const gameRequired =
-                        gameCard &&
-                        gameCard.style.display !==
-                        "none";
+return res.status(400).json({
 
+success: false,
 
-                    /* ==================================
-                       PAYMENT
-                    ================================== */
+error:
+"Screenshot upload failed: " +
+error.message
 
-                    const paymentElement =
-                        document.querySelector(
-                            'input[name="payment"]:checked'
-                        );
+});
 
+}
 
-                    const paymentMethod =
-                        paymentElement
-                            ? paymentElement.value
-                            : "esewa";
 
+if (
+error &&
+(
+error.message ===
+"Only JPG, PNG and WEBP images are allowed." ||
 
-                    /* ==================================
-                       SCREENSHOT
-                    ================================== */
+error.message ===
+"Only image files are allowed."
+)
+) {
 
-                    const screenshotInput =
-                        document.getElementById(
-                            "paymentScreenshot"
-                        );
+return res.status(400).json({
 
+success: false,
 
-                    const screenshot =
-                        screenshotInput.files[0];
+error:
+error.message
 
+});
 
-                    /* ==================================
-                       VALIDATION
-                    ================================== */
+}
 
-                    if (!name) {
 
-                        showError(
-                            "Please enter your full name."
-                        );
+next(error);
 
-                        return;
+}
+);
 
-                    }
 
+// =====================================================
+// START SERVER
+// =====================================================
 
-                    if (!email) {
+const PORT =
+process.env.PORT || 3000;
 
-                        showError(
-                            "Please enter your email."
-                        );
 
-                        return;
+app.listen(
+PORT,
+() => {
 
-                    }
+console.log(
+`TopUpMandu backend running on port ${PORT}`
+);
 
-
-                    if (!phone) {
-
-                        showError(
-                            "Please enter your phone number."
-                        );
-
-                        return;
-
-                    }
-
-
-                    if (
-                        gameRequired &&
-                        !playerId
-                    ) {
-
-                        showError(
-                            "Please enter your Player ID / UID."
-                        );
-
-                        return;
-
-                    }
-
-
-                    if (
-                        gameRequired &&
-                        regionElement &&
-                        !region
-                    ) {
-
-                        showError(
-                            "Please enter your Region."
-                        );
-
-                        return;
-
-                    }
-
-
-                    if (!screenshot) {
-
-                        showError(
-                            "Please upload your payment screenshot."
-                        );
-
-                        return;
-
-                    }
-
-
-                    if (
-                        screenshot.size >
-                        5 * 1024 * 1024
-                    ) {
-
-                        showError(
-                            "Payment screenshot must be smaller than 5 MB."
-                        );
-
-                        return;
-
-                    }
-
-
-                    /* ==================================
-                       DISABLE BUTTON
-                    ================================== */
-
-                    button.disabled =
-                        true;
-
-
-                    button.textContent =
-                        "Uploading Payment...";
-
-
-                    try {
-
-
-                        /* ==================================
-                           FORM DATA
-                        ================================== */
-
-                        const formData =
-                            new FormData();
-
-
-                        formData.append(
-                            "customer",
-                            JSON.stringify({
-                                name:
-                                    name,
-                                email:
-                                    email,
-                                phone:
-                                    phone
-                            })
-                        );
-
-
-                        formData.append(
-                            "items",
-                            JSON.stringify(
-                                currentCart.items
-                            )
-                        );
-
-
-                        formData.append(
-                            "total_price",
-                            currentCart.total_price
-                        );
-
-
-                        formData.append(
-                            "currency",
-                            currentCart.currency ||
-                            "NPR"
-                        );
-
-
-                        formData.append(
-                            "playerId",
-                            playerId
-                        );
-
-
-                        formData.append(
-                            "region",
-                            region
-                        );
-
-
-                        formData.append(
-                            "paymentMethod",
-                            paymentMethod
-                        );
-
-
-                        formData.append(
-                            "paymentScreenshot",
-                            screenshot
-                        );
-
-
-                        /* ==================================
-                           SEND TO BACKEND
-                        ================================== */
-
-                        const response =
-                            await fetch(
-                                BACKEND +
-                                "/create-order",
-                                {
-
-                                    method:
-                                        "POST",
-
-                                    body:
-                                        formData
-
-                                }
-                            );
-
-
-                        let result;
-
-
-                        try {
-
-                            result =
-                                await response.json();
-
-                        } catch (jsonError) {
-
-                            throw new Error(
-                                "The server returned an invalid response."
-                            );
-
-                        }
-
-
-                        console.log(
-                            "Order response:",
-                            result
-                        );
-
-
-                        if (!response.ok || !result.success) {
-
-                            let message = "Order creation failed.";
-
-                            if (result.error) {
-                                message = result.error;
-                            }
-
-                            if (result.errors) {
-                                if (Array.isArray(result.errors)) {
-                                    message = result.errors
-                                        .map(e => e.message || JSON.stringify(e))
-                                        .join("\n");
-                                } else {
-                                    message = JSON.stringify(result.errors);
-                                }
-                            }
-
-                            throw new Error(message);
-                        }
-
-
-                        /* ==================================
-                           SUCCESS
-                        ================================== */
-
-                        showSuccess(
-
-                            "Payment screenshot received and order created successfully! " +
-                            (
-                                result.order &&
-                                    result.order.name
-                                    ? result.order.name
-                                    : ""
-                            )
-
-                        );
-
-
-                        button.textContent =
-                            "Order Created ✓";
-
-
-                        button.disabled =
-                            true;
-
-
-                    } catch (error) {
-
-                        console.error(
-                            "Order error:",
-                            error
-                        );
-
-
-                        showError(
-                            error.message
-                        );
-
-
-                        button.disabled =
-                            false;
-
-
-                        button.textContent =
-                            "Place Order";
-
-                    }
-
-                }
-            );
-
-    </script>
-
-</body>
-
-</html>
+}
+);
