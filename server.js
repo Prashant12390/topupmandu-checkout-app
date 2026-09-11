@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
@@ -5,6 +7,7 @@ const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 
 const app = express();
+
 
 /* =========================================================
    CLOUDINARY
@@ -57,19 +60,69 @@ const upload = multer({
 
 
 /* =========================================================
-   BODY PARSERS
+   EXPRESS BODY PARSERS
 ========================================================= */
 
-app.use(express.json({
-    limit: "2mb"
-}));
+app.use(
+    express.json({
+        limit: "2mb"
+    })
+);
 
-app.use(express.urlencoded({
-    extended: true,
-    limit: "2mb"
-}));
+app.use(
+    express.urlencoded({
+        extended: true,
+        limit: "2mb"
+    })
+);
 
-app.use(express.static(__dirname));
+app.use(
+    express.static(__dirname)
+);
+
+
+/* =========================================================
+   CORS
+   Allows TopUpMandu website to call Free Fire verification
+========================================================= */
+
+app.use((req, res, next) => {
+
+    const allowedOrigins = [
+        "https://topupmandu.com",
+        "https://www.topupmandu.com"
+    ];
+
+    const origin = req.headers.origin;
+
+    if (allowedOrigins.includes(origin)) {
+
+        res.setHeader(
+            "Access-Control-Allow-Origin",
+            origin
+        );
+
+    }
+
+    res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET, POST, OPTIONS"
+    );
+
+    res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type"
+    );
+
+    if (req.method === "OPTIONS") {
+
+        return res.sendStatus(204);
+
+    }
+
+    next();
+
+});
 
 
 /* =========================================================
@@ -94,32 +147,516 @@ const carts = new Map();
 
 
 /* =========================================================
+   FREE FIRE - GAMES KINBO API
+========================================================= */
+
+const GAMES_KINBO_API_BASE =
+    "https://api.gameskinbo.com";
+
+
+/* =========================================================
+   FREE FIRE VERIFICATION STATUS
+========================================================= */
+
+app.get(
+    "/verify-free-fire",
+    (req, res) => {
+
+        res.json({
+
+            success: true,
+
+            service:
+                "TopUpMandu Free Fire UID Verification",
+
+            provider:
+                "Games Kinbo",
+
+            status:
+                "online"
+
+        });
+
+    }
+);
+
+
+/* =========================================================
+   FREE FIRE PLAYER VERIFICATION
+========================================================= */
+
+app.post(
+    "/verify-free-fire",
+    async (req, res) => {
+
+        try {
+
+            /* -------------------------------------------------
+               API KEY
+            ------------------------------------------------- */
+
+            const apiKey =
+                process.env.FREE_FIRE_API_KEY;
+
+
+            if (!apiKey) {
+
+                console.error(
+                    "FREE_FIRE_API_KEY is missing."
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    error:
+                        "Free Fire verification is not configured."
+
+                });
+
+            }
+
+
+            /* -------------------------------------------------
+               READ REQUEST
+            ------------------------------------------------- */
+
+            let uid =
+                req.body?.uid;
+
+            let region =
+                req.body?.region;
+
+
+            uid =
+                String(
+                    uid || ""
+                ).trim();
+
+
+            if (region) {
+
+                region =
+                    String(
+                        region
+                    ).trim().toUpperCase();
+
+            }
+
+
+            /* -------------------------------------------------
+               VALIDATE UID
+            ------------------------------------------------- */
+
+            if (!uid) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Please enter your Free Fire Player ID."
+
+                });
+
+            }
+
+
+            if (!/^\d{5,15}$/.test(uid)) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    error:
+                        "Player ID must contain 5-15 digits."
+
+                });
+
+            }
+
+
+            /* -------------------------------------------------
+               BUILD GAMES KINBO URL
+            ------------------------------------------------- */
+
+            const url =
+                new URL(
+                    `${GAMES_KINBO_API_BASE}/ff-info/get`
+                );
+
+
+            url.searchParams.set(
+                "uid",
+                uid
+            );
+
+
+            /*
+             * Region is optional.
+             *
+             * If region is not supplied,
+             * Games Kinbo automatically tries
+             * supported regions.
+             */
+
+            if (region) {
+
+                url.searchParams.set(
+                    "region",
+                    region
+                );
+
+            }
+
+
+            console.log(
+                "[FREE FIRE] Verifying UID:",
+                uid
+            );
+
+
+            if (region) {
+
+                console.log(
+                    "[FREE FIRE] Region:",
+                    region
+                );
+
+            } else {
+
+                console.log(
+                    "[FREE FIRE] Region: automatic"
+                );
+
+            }
+
+
+            /* -------------------------------------------------
+               API REQUEST TIMEOUT
+            ------------------------------------------------- */
+
+            const controller =
+                new AbortController();
+
+
+            const timeout =
+                setTimeout(
+                    () => controller.abort(),
+                    10000
+                );
+
+
+            let response;
+
+
+            try {
+
+                response =
+                    await fetch(
+                        url.toString(),
+                        {
+
+                            method: "GET",
+
+                            headers: {
+
+                                "x-api-key":
+                                    apiKey,
+
+                                "Accept":
+                                    "application/json"
+
+                            },
+
+                            signal:
+                                controller.signal
+
+                        }
+                    );
+
+            } finally {
+
+                clearTimeout(
+                    timeout
+                );
+
+            }
+
+
+            /* -------------------------------------------------
+               READ API RESPONSE
+            ------------------------------------------------- */
+
+            let data = null;
+
+
+            try {
+
+                data =
+                    await response.json();
+
+            } catch {
+
+                data = null;
+
+            }
+
+
+            console.log(
+                "[FREE FIRE] Games Kinbo status:",
+                response.status
+            );
+
+
+            /* -------------------------------------------------
+               API ERROR
+            ------------------------------------------------- */
+
+            if (!response.ok) {
+
+                console.error(
+                    "[FREE FIRE] Games Kinbo error:",
+                    data
+                );
+
+
+                /* Invalid UID */
+
+                if (response.status === 402) {
+
+                    return res.status(404).json({
+
+                        success: false,
+
+                        error:
+                            "Player not found. Please check your Player ID."
+
+                    });
+
+                }
+
+
+                /* Unauthorized */
+
+                if (response.status === 401) {
+
+                    return res.status(500).json({
+
+                        success: false,
+
+                        error:
+                            "Free Fire verification API key is invalid."
+
+                    });
+
+                }
+
+
+                /* Rate limit */
+
+                if (response.status === 429) {
+
+                    return res.status(429).json({
+
+                        success: false,
+
+                        error:
+                            "Free Fire verification is temporarily busy. Please try again in a moment."
+
+                    });
+
+                }
+
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    error:
+                        data?.error ||
+                        "Unable to verify the Free Fire Player ID right now."
+
+                });
+
+            }
+
+
+            /* -------------------------------------------------
+               VALIDATE RESPONSE
+            ------------------------------------------------- */
+
+            if (
+                !data ||
+                !data.AccountInfo
+            ) {
+
+                console.error(
+                    "[FREE FIRE] Unexpected API response:",
+                    data
+                );
+
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    error:
+                        "Player not found. Please check your Player ID."
+
+                });
+
+            }
+
+
+            /* -------------------------------------------------
+               PLAYER INFORMATION
+            ------------------------------------------------- */
+
+            const accountInfo =
+                data.AccountInfo;
+
+
+            const nickname =
+                accountInfo.AccountName
+                    ? String(
+                        accountInfo.AccountName
+                    )
+                    : "";
+
+
+            const accountLevel =
+                accountInfo.AccountLevel != null
+                    ? Number(
+                        accountInfo.AccountLevel
+                    )
+                    : null;
+
+
+            const accountRegion =
+                accountInfo.AccountRegion
+                    ? String(
+                        accountInfo.AccountRegion
+                    ).toUpperCase()
+                    : (
+                        region || ""
+                    );
+
+
+            /* -------------------------------------------------
+               SUCCESS
+            ------------------------------------------------- */
+
+            console.log(
+                "[FREE FIRE] PLAYER VERIFIED:",
+                nickname,
+                "|",
+                accountRegion
+            );
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                game:
+                    "Free Fire",
+
+                verified:
+                    true,
+
+                player: {
+
+                    uid:
+                        uid,
+
+                    nickname:
+                        nickname,
+
+                    region:
+                        accountRegion,
+
+                    level:
+                        accountLevel
+
+                }
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "[FREE FIRE] UNEXPECTED ERROR:",
+                error
+            );
+
+
+            if (
+                error.name ===
+                "AbortError"
+            ) {
+
+                return res.status(504).json({
+
+                    success: false,
+
+                    error:
+                        "Free Fire verification timed out. Please try again."
+
+                });
+
+            }
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                error:
+                    "Unable to verify the Player ID right now. Please try again."
+
+            });
+
+        }
+
+    }
+);
+
+
+/* =========================================================
    HOME
 ========================================================= */
 
-app.get("/", (req, res) => {
+app.get(
+    "/",
+    (req, res) => {
 
-    res.send(
-        "TopUpMandu Custom Checkout Backend is running!"
-    );
+        res.send(
+            "TopUpMandu Custom Checkout Backend is running!"
+        );
 
-});
+    }
+);
 
 
 /* =========================================================
    CHECKOUT PAGE
 ========================================================= */
 
-app.get("/checkout", (req, res) => {
+app.get(
+    "/checkout",
+    (req, res) => {
 
-    res.sendFile(
-        path.join(
-            __dirname,
-            "checkout.html"
-        )
-    );
+        res.sendFile(
+            path.join(
+                __dirname,
+                "checkout.html"
+            )
+        );
 
-});
+    }
+);
 
 
 /* =========================================================
@@ -141,34 +678,38 @@ async function getShopifyToken() {
     }
 
 
-    const response = await fetch(
+    const response =
+        await fetch(
 
-        `https://${SHOPIFY_SHOP}.myshopify.com/admin/oauth/access_token`,
+            `https://${SHOPIFY_SHOP}.myshopify.com/admin/oauth/access_token`,
 
-        {
+            {
 
-            method: "POST",
+                method: "POST",
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+                headers: {
 
-            body: JSON.stringify({
+                    "Content-Type":
+                        "application/json"
 
-                client_id:
-                    SHOPIFY_CLIENT_ID,
+                },
 
-                client_secret:
-                    SHOPIFY_CLIENT_SECRET,
+                body: JSON.stringify({
 
-                grant_type:
-                    "client_credentials"
+                    client_id:
+                        SHOPIFY_CLIENT_ID,
 
-            })
+                    client_secret:
+                        SHOPIFY_CLIENT_SECRET,
 
-        }
+                    grant_type:
+                        "client_credentials"
 
-    );
+                })
+
+            }
+
+        );
 
 
     const data =
@@ -205,6 +746,7 @@ app.get(
 
             await getShopifyToken();
 
+
             res.json({
 
                 success: true,
@@ -214,12 +756,14 @@ app.get(
 
             });
 
+
         } catch (error) {
 
             console.error(
                 "TEST SHOPIFY ERROR:",
                 error
             );
+
 
             res.status(500).json({
 
@@ -293,7 +837,8 @@ app.post(
 
                 {
 
-                    cart: cart,
+                    cart:
+                        cart,
 
                     createdAt:
                         Date.now()
@@ -342,6 +887,7 @@ app.post(
                 "SAVE CART ERROR:",
                 error
             );
+
 
             res.status(500).json({
 
@@ -428,6 +974,7 @@ app.get(
                 error
             );
 
+
             res.status(500).json({
 
                 success: false,
@@ -494,11 +1041,15 @@ app.post(
 
                                         if (error) {
 
-                                            reject(error);
+                                            reject(
+                                                error
+                                            );
 
                                         } else {
 
-                                            resolve(result);
+                                            resolve(
+                                                result
+                                            );
 
                                         }
 
@@ -552,17 +1103,6 @@ app.post(
    CREATE SHOPIFY ORDER
 ========================================================= */
 
-/*
- IMPORTANT:
- upload.single("paymentScreenshot") is placed here.
-
- This allows the route to receive:
-
- - normal JSON requests
- - FormData requests
- - paymentScreenshot files
-*/
-
 app.post(
     "/create-order",
     upload.single("paymentScreenshot"),
@@ -571,30 +1111,41 @@ app.post(
         try {
 
             console.log(
-                "CREATE ORDER REQUEST RECEIVED"
+                "======================================"
             );
+
+            console.log(
+                "TOPUPMANDU CREATE ORDER"
+            );
+
+            console.log(
+                "======================================"
+            );
+
 
             console.log(
                 "Content-Type:",
                 req.headers["content-type"]
             );
 
+
             console.log(
-                "Body:",
+                "Request body:",
                 req.body
             );
 
+
             console.log(
-                "File:",
+                "Screenshot:",
                 req.file
                     ? req.file.originalname
                     : "No screenshot"
             );
 
 
-            /*
-             * SAFETY CHECK
-             */
+            /* =================================================
+               SAFETY CHECK
+            ================================================= */
 
             if (!req.body) {
 
@@ -620,69 +1171,87 @@ app.post(
             let items =
                 req.body.items;
 
+
             const playerId =
                 req.body.playerId || "";
+
 
             const region =
                 req.body.region || "";
 
+
             const paymentMethod =
                 req.body.paymentMethod || "";
+
 
             const paymentScreenshot =
                 req.body.paymentScreenshot || "";
 
 
             /* =================================================
-               PARSE FORM DATA STRINGS
+               PARSE CUSTOMER
             ================================================= */
 
             let parsedCustomer =
                 customer;
 
-            let parsedItems =
-                items;
 
+            if (
+                typeof customer ===
+                "string"
+            ) {
 
-            try {
-
-                if (
-                    typeof customer ===
-                    "string"
-                ) {
+                try {
 
                     parsedCustomer =
                         JSON.parse(customer);
 
+                } catch (error) {
+
+                    return res.status(400).json({
+
+                        success: false,
+
+                        error:
+                            "Invalid customer data."
+
+                    });
+
                 }
 
+            }
 
-                if (
-                    typeof items ===
-                    "string"
-                ) {
+
+            /* =================================================
+               PARSE ITEMS
+            ================================================= */
+
+            let parsedItems =
+                items;
+
+
+            if (
+                typeof items ===
+                "string"
+            ) {
+
+                try {
 
                     parsedItems =
                         JSON.parse(items);
 
+                } catch (error) {
+
+                    return res.status(400).json({
+
+                        success: false,
+
+                        error:
+                            "Invalid cart data."
+
+                    });
+
                 }
-
-            } catch (parseError) {
-
-                console.error(
-                    "JSON PARSE ERROR:",
-                    parseError
-                );
-
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    error:
-                        "Invalid customer or cart data."
-
-                });
 
             }
 
@@ -693,8 +1262,7 @@ app.post(
 
             if (
                 !parsedCustomer ||
-                typeof parsedCustomer !==
-                "object"
+                typeof parsedCustomer !== "object"
             ) {
 
                 return res.status(400).json({
@@ -732,7 +1300,59 @@ app.post(
 
 
             /* =================================================
-               UPLOAD SCREENSHOT TO CLOUDINARY
+               CUSTOMER INFORMATION
+            ================================================= */
+
+            const customerName =
+                String(
+                    parsedCustomer.name || ""
+                ).trim();
+
+
+            const customerEmail =
+                String(
+                    parsedCustomer.email || ""
+                ).trim();
+
+
+            const customerPhone =
+                String(
+                    parsedCustomer.phone || ""
+                ).trim();
+
+
+            /* =================================================
+               SPLIT CUSTOMER NAME
+            ================================================= */
+
+            let firstName =
+                customerName;
+
+
+            let lastName =
+                "";
+
+
+            if (
+                customerName.includes(" ")
+            ) {
+
+                const nameParts =
+                    customerName.split(/\s+/);
+
+
+                firstName =
+                    nameParts.shift();
+
+
+                lastName =
+                    nameParts.join(" ");
+
+            }
+
+
+            /* =================================================
+               UPLOAD SCREENSHOT
             ================================================= */
 
             let screenshotUrl =
@@ -742,7 +1362,7 @@ app.post(
             if (req.file) {
 
                 console.log(
-                    "Uploading screenshot to Cloudinary..."
+                    "Uploading payment screenshot..."
                 );
 
 
@@ -798,17 +1418,15 @@ app.post(
 
 
                 console.log(
-                    "Screenshot uploaded:",
-                    screenshotUrl
+                    "Screenshot uploaded successfully."
                 );
 
             }
 
 
-            /*
-             * If frontend sends screenshot URL instead
-             * of uploading directly, use it.
-             */
+            /* =================================================
+               IF FRONTEND ALREADY SENT URL
+            ================================================= */
 
             if (
                 !screenshotUrl &&
@@ -816,7 +1434,9 @@ app.post(
             ) {
 
                 screenshotUrl =
-                    paymentScreenshot;
+                    String(
+                        paymentScreenshot
+                    );
 
             }
 
@@ -839,8 +1459,7 @@ app.post(
 
                         const variantId =
                             item.variant_id ||
-                            item.variantId ||
-                            item.variant_id;
+                            item.variantId;
 
 
                         if (!variantId) {
@@ -866,14 +1485,70 @@ app.post(
                                 : `gid://shopify/ProductVariant/${variantId}`;
 
 
+                        /* =====================================
+                           PRESERVE PRODUCT PROPERTIES
+                        ===================================== */
+
                         const properties = [];
 
 
-                        /*
-                         * PLAYER ID
-                         */
+                        if (
+                            item.properties &&
+                            typeof item.properties ===
+                            "object"
+                        ) {
 
-                        if (playerId) {
+                            for (
+                                const [
+                                    key,
+                                    value
+                                ]
+                                of Object.entries(
+                                    item.properties
+                                )
+                            ) {
+
+                                if (
+                                    value !== null &&
+                                    value !== undefined &&
+                                    String(value).trim() !== ""
+                                ) {
+
+                                    properties.push({
+
+                                        name:
+                                            String(key),
+
+                                        value:
+                                            String(value)
+
+                                    });
+
+                                }
+
+                            }
+
+                        }
+
+
+                        /* =====================================
+                           PLAYER ID
+                        ===================================== */
+
+                        const hasPlayerId =
+                            properties.some(
+                                property =>
+                                    property.name
+                                        .toLowerCase()
+                                        .replace(/\s+/g, "") ===
+                                    "playerid"
+                            );
+
+
+                        if (
+                            playerId &&
+                            !hasPlayerId
+                        ) {
 
                             properties.push({
 
@@ -890,11 +1565,24 @@ app.post(
                         }
 
 
-                        /*
-                         * REGION
-                         */
+                        /* =====================================
+                           REGION
+                        ===================================== */
 
-                        if (region) {
+                        const hasRegion =
+                            properties.some(
+                                property =>
+                                    property.name
+                                        .toLowerCase()
+                                        .replace(/\s+/g, "") ===
+                                    "region"
+                            );
+
+
+                        if (
+                            region &&
+                            !hasRegion
+                        ) {
 
                             properties.push({
 
@@ -911,28 +1599,11 @@ app.post(
                         }
 
 
-                        /*
-                         * PAYMENT METHOD
-                         */
+                        /* =====================================
+                           LINE ITEM
+                        ===================================== */
 
-                        if (paymentMethod) {
-
-                            properties.push({
-
-                                name:
-                                    "Payment Method",
-
-                                value:
-                                    String(
-                                        paymentMethod
-                                    )
-
-                            });
-
-                        }
-
-
-                        return {
+                        const lineItem = {
 
                             variantId:
                                 variantGid,
@@ -940,12 +1611,22 @@ app.post(
                             quantity:
                                 Number(
                                     item.quantity
-                                ) || 1,
-
-                            properties:
-                                properties
+                                ) || 1
 
                         };
+
+
+                        if (
+                            properties.length > 0
+                        ) {
+
+                            lineItem.properties =
+                                properties;
+
+                        }
+
+
+                        return lineItem;
 
                     }
                 );
@@ -991,7 +1672,7 @@ app.post(
 
 
             /* =================================================
-               CREATE ORDER OBJECT
+               CLEAN SHOPIFY ORDER
             ================================================= */
 
             const order = {
@@ -1000,7 +1681,7 @@ app.post(
                     lineItems,
 
                 note:
-                    "Order created through TopUpMandu Custom Checkout",
+                    "TopUpMandu Custom Checkout",
 
                 tags: [
 
@@ -1014,93 +1695,111 @@ app.post(
 
 
             /* =================================================
-               CUSTOMER EMAIL
+               CUSTOMER
             ================================================= */
 
             if (
-                parsedCustomer.email
+                customerName ||
+                customerEmail ||
+                customerPhone
             ) {
+
+                const customerData = {};
+
+
+                if (customerEmail) {
+
+                    customerData.email =
+                        customerEmail;
+
+                }
+
+
+                if (customerPhone) {
+
+                    customerData.phone =
+                        customerPhone;
+
+                }
+
+
+                if (firstName) {
+
+                    customerData.firstName =
+                        firstName;
+
+                }
+
+
+                if (lastName) {
+
+                    customerData.lastName =
+                        lastName;
+
+                }
+
+
+                order.customer = {
+
+                    toUpsert:
+                        customerData
+
+                };
+
+            }
+
+
+            /* =================================================
+               EMAIL
+            ================================================= */
+
+            if (customerEmail) {
 
                 order.email =
-                    String(
-                        parsedCustomer.email
-                    );
+                    customerEmail;
 
             }
 
 
             /* =================================================
-               CUSTOMER PHONE
+               PHONE
             ================================================= */
 
-            if (
-                parsedCustomer.phone
-            ) {
+            if (customerPhone) {
 
                 order.phone =
-                    String(
-                        parsedCustomer.phone
-                    );
+                    customerPhone;
 
             }
 
 
             /* =================================================
-               CUSTOMER NAME IN NOTE
-            ================================================= */
-
-            if (
-                parsedCustomer.name
-            ) {
-
-                order.note +=
-                    "\nCustomer Name: " +
-                    String(
-                        parsedCustomer.name
-                    );
-
-            }
-
-
-            /* =================================================
-               PAYMENT SCREENSHOT
-            ================================================= */
-
-            if (screenshotUrl) {
-
-                order.note +=
-                    "\nPayment Screenshot: " +
-                    screenshotUrl;
-
-            }
-
-
-            /* =================================================
-               ORDER CUSTOM ATTRIBUTES
+               ORDER ADDITIONAL DETAILS
             ================================================= */
 
             const attributes = [];
 
 
-            /*
-             * PAYMENT METHOD
-             */
+            /* PAYMENT METHOD */
 
-            attributes.push({
+            if (paymentMethod) {
 
-                key:
-                    "Payment Method",
+                attributes.push({
 
-                value:
-                    paymentMethod ||
-                    "Not provided"
+                    key:
+                        "Payment Method",
 
-            });
+                    value:
+                        String(
+                            paymentMethod
+                        )
+
+                });
+
+            }
 
 
-            /*
-             * PLAYER ID
-             */
+            /* PLAYER ID */
 
             if (playerId) {
 
@@ -1119,9 +1818,7 @@ app.post(
             }
 
 
-            /*
-             * REGION
-             */
+            /* REGION */
 
             if (region) {
 
@@ -1140,9 +1837,7 @@ app.post(
             }
 
 
-            /*
-             * PAYMENT SCREENSHOT
-             */
+            /* PAYMENT SCREENSHOT */
 
             if (screenshotUrl) {
 
@@ -1159,18 +1854,37 @@ app.post(
             }
 
 
-            order.customAttributes =
-                attributes;
+            if (
+                attributes.length > 0
+            ) {
+
+                order.customAttributes =
+                    attributes;
+
+            }
 
 
             /* =================================================
-               SEND ORDER TO SHOPIFY
+               DEBUG
             ================================================= */
 
             console.log(
-                "Sending order to Shopify..."
+                "SHOPIFY ORDER PAYLOAD:"
             );
 
+
+            console.log(
+                JSON.stringify(
+                    order,
+                    null,
+                    2
+                )
+            );
+
+
+            /* =================================================
+               SEND TO SHOPIFY
+            ================================================= */
 
             const response =
                 await fetch(
@@ -1217,7 +1931,11 @@ app.post(
 
 
             console.log(
-                "SHOPIFY RESPONSE:",
+                "SHOPIFY RESPONSE:"
+            );
+
+
+            console.log(
                 JSON.stringify(
                     result,
                     null,
@@ -1227,10 +1945,12 @@ app.post(
 
 
             /* =================================================
-               GRAPHQL ERROR
+               GRAPHQL ERRORS
             ================================================= */
 
-            if (result.errors) {
+            if (
+                result.errors
+            ) {
 
                 return res.status(500).json({
 
@@ -1278,7 +1998,11 @@ app.post(
             ) {
 
                 console.error(
-                    "SHOPIFY USER ERRORS:",
+                    "SHOPIFY USER ERRORS:"
+                );
+
+
+                console.error(
                     orderResult.userErrors
                 );
 
@@ -1300,8 +2024,23 @@ app.post(
             ================================================= */
 
             console.log(
-                "ORDER CREATED:",
-                orderResult.order
+                "======================================"
+            );
+
+
+            console.log(
+                "ORDER CREATED SUCCESSFULLY"
+            );
+
+
+            console.log(
+                "ORDER:",
+                orderResult.order?.name
+            );
+
+
+            console.log(
+                "======================================"
             );
 
 
@@ -1324,17 +2063,22 @@ app.post(
         } catch (error) {
 
             console.error(
-                "===================================="
+                "======================================"
             );
+
 
             console.error(
                 "CREATE ORDER ERROR:"
             );
 
-            console.error(error);
 
             console.error(
-                "===================================="
+                error
+            );
+
+
+            console.error(
+                "======================================"
             );
 
 
@@ -1387,8 +2131,10 @@ app.use(
 
         if (
             error &&
-            error.message ===
-            "Only JPG, PNG and WEBP images are allowed."
+            (
+                error.message ===
+                "Only JPG, PNG and WEBP images are allowed."
+            )
         ) {
 
             return res.status(400).json({
