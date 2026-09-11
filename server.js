@@ -475,10 +475,16 @@ app.post(
 
                     error:
                         data?.error ||
-                        "Unable to verify the Free Fire Player ID right now."
+                        data?.message ||
+                        "Unable to verify the Free Fire Player ID right now.",
+
+                    providerStatus:
+                        response.status,
+
+                    providerResponse:
+                        data
 
                 });
-
             }
 
 
