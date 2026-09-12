@@ -87,21 +87,15 @@ app.use(
 ========================================================= */
 
 app.use((req, res, next) => {
+    const origin = req.headers.origin;
 
     const allowedOrigins = [
         "https://topupmandu.com",
         "https://www.topupmandu.com"
     ];
 
-    const origin = req.headers.origin;
-
-    if (allowedOrigins.includes(origin)) {
-
-        res.setHeader(
-            "Access-Control-Allow-Origin",
-            origin
-        );
-
+    if (origin && allowedOrigins.includes(origin)) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
     }
 
     res.setHeader(
@@ -111,17 +105,19 @@ app.use((req, res, next) => {
 
     res.setHeader(
         "Access-Control-Allow-Headers",
-        "Content-Type"
+        "Content-Type, Accept"
+    );
+
+    res.setHeader(
+        "Access-Control-Allow-Credentials",
+        "false"
     );
 
     if (req.method === "OPTIONS") {
-
-        return res.sendStatus(204);
-
+        return res.status(204).end();
     }
 
     next();
-
 });
 
 
@@ -172,140 +168,129 @@ app.get("/debug-free-fire", (req, res) => {
    DEBUG GAMES KINBO CONNECTION FROM VERCEL
 ========================================================= */
 
-app.get("/debug-free-fire-provider", async (req, res) => {
+app.get(
+    "/debug-free-fire-provider",
+    async (req, res) => {
 
-    try {
+        try {
 
-        const apiKey =
-            process.env.FREE_FIRE_API_KEY;
+            const apiKey =
+                process.env.FREE_FIRE_API_KEY;
 
-        if (!apiKey) {
+
+            if (!apiKey) {
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    error:
+                        "FREE_FIRE_API_KEY missing."
+
+                });
+
+            }
+
+
+            const url =
+                new URL(
+                    `${GAMES_KINBO_API_BASE}/ff-info/get`
+                );
+
+
+            url.searchParams.set(
+                "uid",
+                "1589593213"
+            );
+
+
+            console.log(
+                "[DEBUG] Calling Games Kinbo:",
+                url.toString()
+            );
+
+
+            const response =
+                await fetch(
+                    url.toString(),
+                    {
+
+                        method: "GET",
+
+                        headers: {
+
+                            "x-api-key":
+                                apiKey,
+
+                            "Accept":
+                                "application/json",
+
+                            "User-Agent":
+                                "TopUpMandu/1.0"
+
+                        },
+
+                        signal:
+                            AbortSignal.timeout(15000)
+
+                    }
+                );
+
+
+            const text =
+                await response.text();
+
+
+            console.log(
+                "[DEBUG] Games Kinbo status:",
+                response.status
+            );
+
+
+            console.log(
+                "[DEBUG] Games Kinbo response:",
+                text
+            );
+
+
+            return res.status(200).json({
+
+                success:
+                    response.ok,
+
+                providerStatus:
+                    response.status,
+
+                providerResponse:
+                    text
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "[DEBUG PROVIDER ERROR]",
+                error
+            );
+
 
             return res.status(500).json({
+
                 success: false,
-                error: "FREE_FIRE_API_KEY is missing."
+
+                error:
+                    error.message,
+
+                errorName:
+                    error.name
+
             });
 
         }
 
-        const url = new URL(
-            "https://api.gameskinbo.com/ff-info/get"
-        );
-
-        url.searchParams.set(
-            "uid",
-            "1589593213"
-        );
-
-        url.searchParams.set(
-            "region",
-            "BD"
-        );
-
-
-        console.log(
-            "[DEBUG] Games Kinbo URL:",
-            url.toString()
-        );
-
-        console.log(
-            "[DEBUG] API key configured:",
-            !!apiKey
-        );
-
-        console.log(
-            "[DEBUG] API key length:",
-            apiKey.length
-        );
-
-
-        const response = await fetch(
-            url.toString(),
-            {
-                method: "GET",
-
-                headers: {
-                    "x-api-key": apiKey,
-                    "Accept": "application/json",
-                    "User-Agent": "TopUpMandu/1.0"
-                }
-            }
-        );
-
-
-        const text =
-            await response.text();
-
-
-        console.log(
-            "[DEBUG] Games Kinbo status:",
-            response.status
-        );
-
-        console.log(
-            "[DEBUG] Games Kinbo response:",
-            text
-        );
-
-
-        return res.json({
-
-            success:
-                response.ok,
-
-            providerStatus:
-                response.status,
-
-            providerResponse:
-                text
-
-        });
-
-
-    } catch (error) {
-
-        console.error(
-            "[DEBUG PROVIDER ERROR]",
-            error
-        );
-
-
-        return res.status(500).json({
-
-            success: false,
-
-            error:
-                error.message
-
-        });
-
-    }
-
-});
-
-
-app.get(
-    "/verify-free-fire",
-    (req, res) => {
-
-        res.json({
-
-            success: true,
-
-            service:
-                "TopUpMandu Free Fire UID Verification",
-
-            provider:
-                "Games Kinbo",
-
-            status:
-                "online"
-
-        });
-
     }
 );
-
 
 /* =========================================================
    FREE FIRE PLAYER VERIFICATION
