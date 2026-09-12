@@ -167,6 +167,123 @@ app.get("/debug-free-fire", (req, res) => {
     });
 });
 
+
+/* =========================================================
+   DEBUG GAMES KINBO CONNECTION FROM VERCEL
+========================================================= */
+
+app.get("/debug-free-fire-provider", async (req, res) => {
+
+    try {
+
+        const apiKey =
+            process.env.FREE_FIRE_API_KEY;
+
+        if (!apiKey) {
+
+            return res.status(500).json({
+                success: false,
+                error: "FREE_FIRE_API_KEY is missing."
+            });
+
+        }
+
+        const url = new URL(
+            "https://api.gameskinbo.com/ff-info/get"
+        );
+
+        url.searchParams.set(
+            "uid",
+            "1589593213"
+        );
+
+        url.searchParams.set(
+            "region",
+            "BD"
+        );
+
+
+        console.log(
+            "[DEBUG] Games Kinbo URL:",
+            url.toString()
+        );
+
+        console.log(
+            "[DEBUG] API key configured:",
+            !!apiKey
+        );
+
+        console.log(
+            "[DEBUG] API key length:",
+            apiKey.length
+        );
+
+
+        const response = await fetch(
+            url.toString(),
+            {
+                method: "GET",
+
+                headers: {
+                    "x-api-key": apiKey,
+                    "Accept": "application/json",
+                    "User-Agent": "TopUpMandu/1.0"
+                }
+            }
+        );
+
+
+        const text =
+            await response.text();
+
+
+        console.log(
+            "[DEBUG] Games Kinbo status:",
+            response.status
+        );
+
+        console.log(
+            "[DEBUG] Games Kinbo response:",
+            text
+        );
+
+
+        return res.json({
+
+            success:
+                response.ok,
+
+            providerStatus:
+                response.status,
+
+            providerResponse:
+                text
+
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "[DEBUG PROVIDER ERROR]",
+            error
+        );
+
+
+        return res.status(500).json({
+
+            success: false,
+
+            error:
+                error.message
+
+        });
+
+    }
+
+});
+
+
 app.get(
     "/verify-free-fire",
     (req, res) => {
