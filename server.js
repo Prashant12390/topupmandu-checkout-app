@@ -157,6 +157,15 @@ const GAMES_KINBO_API_BASE =
 /* =========================================================
    FREE FIRE VERIFICATION STATUS
 ========================================================= */
+app.get("/debug-free-fire", (req, res) => {
+    const key = process.env.FREE_FIRE_API_KEY;
+
+    res.json({
+        configured: !!key,
+        keyLength: key ? key.length : 0,
+        keyPrefix: key ? key.substring(0, 4) : null
+    });
+});
 
 app.get(
     "/verify-free-fire",
