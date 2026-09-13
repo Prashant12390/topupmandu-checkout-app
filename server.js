@@ -146,6 +146,9 @@ const carts = new Map();
    FREE FIRE - GAMES KINBO API
 ========================================================= */
 
+const HL_GAMING_API_BASE =
+    "https://proapis.hlgamingofficial.com";
+
 const GAMES_KINBO_API_BASE =
     "https://api.gameskinbo.com";
 
@@ -295,6 +298,110 @@ app.get(
 /* =========================================================
    FREE FIRE PLAYER VERIFICATION
 ========================================================= */
+app.get("/debug-hl-gaming", async (req, res) => {
+    try {
+        const userUid =
+            process.env.HL_GAMING_USER_UID;
+
+        const apiKey =
+            process.env.HL_GAMING_API_KEY;
+
+        if (!userUid || !apiKey) {
+            return res.status(500).json({
+                success: false,
+                error:
+                    "HL Gaming credentials are missing."
+            });
+        }
+
+        const url =
+            new URL(
+                `${HL_GAMING_API_BASE}/main/games/freefire/validation/api`
+            );
+
+        url.searchParams.set(
+            "sectionName",
+            "freefireValidation"
+        );
+
+        url.searchParams.set(
+            "useruid",
+            userUid
+        );
+
+        url.searchParams.set(
+            "api",
+            apiKey
+        );
+
+        url.searchParams.set(
+            "uid",
+            "1589593213"
+        );
+
+        url.searchParams.set(
+            "region",
+            "BD"
+        );
+
+        console.log(
+            "[HL DEBUG] Calling HL Gaming..."
+        );
+
+        const response =
+            await fetch(
+                url.toString(),
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept":
+                            "application/json",
+                        "User-Agent":
+                            "TopUpMandu/1.0"
+                    },
+                    signal:
+                        AbortSignal.timeout(15000)
+                }
+            );
+
+        const text =
+            await response.text();
+
+        console.log(
+            "[HL DEBUG] Status:",
+            response.status
+        );
+
+        console.log(
+            "[HL DEBUG] Response:",
+            text
+        );
+
+        return res.status(200).json({
+            success:
+                response.ok,
+
+            providerStatus:
+                response.status,
+
+            providerResponse:
+                text
+        });
+
+    } catch (error) {
+
+        console.error(
+            "[HL DEBUG ERROR]",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            error: error.message,
+            errorName: error.name
+        });
+    }
+});
 
 app.post(
     "/verify-free-fire",
