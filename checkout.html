@@ -290,6 +290,74 @@
             margin-top: 8px;
         }
 
+        /* =========================================================
+           VERIFIED PLAYER
+        ========================================================= */
+
+        .verified-player {
+            margin-top: 8px;
+            background: #070B14;
+            border: 1px solid #202B3D;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .verified-header {
+            padding: 14px 15px;
+            background: #101827;
+            border-bottom: 1px solid #202B3D;
+        }
+
+        .verified-title {
+            color: #5ff0a5;
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .verified-subtitle {
+            color: #9CA8BA;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .verified-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 12px 15px;
+            border-bottom: 1px solid #202B3D;
+        }
+
+        .verified-row:last-child {
+            border-bottom: 0;
+        }
+
+        .verified-label {
+            color: #9CA8BA;
+            font-size: 13px;
+        }
+
+        .verified-value {
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .verified-check {
+            color: #5ff0a5;
+        }
+
+        .not-verified {
+            padding: 14px;
+            background: #32151A;
+            border: 1px solid #5A222B;
+            border-radius: 10px;
+            color: #ff7d8a;
+            font-size: 13px;
+        }
+
         @media (max-width: 600px) {
 
             .container {
@@ -319,6 +387,15 @@
 
             .qr-image {
                 width: 230px;
+            }
+
+            .verified-row {
+                gap: 10px;
+            }
+
+            .verified-label,
+            .verified-value {
+                font-size: 12px;
             }
 
         }
@@ -590,6 +667,13 @@
 
 
         /* =========================================================
+           VERIFIED GAME DATA
+        ========================================================= */
+
+        let verifiedGameData = null;
+
+
+        /* =========================================================
            GET CART PARAMETER
         ========================================================= */
 
@@ -728,6 +812,7 @@
 
         const gameProductHandles = [
 
+            "free-fire-diamond",
             "free-fire-diamonds",
             "pubg-uc",
             "clash-of-clans",
@@ -832,7 +917,319 @@
 
 
         /* =========================================================
-           DISPLAY GAME FIELDS
+           GET LINE ITEM PROPERTIES
+        ========================================================= */
+
+        function getItemProperties(item) {
+
+            /*
+             * Shopify cart properties can arrive in
+             * several formats depending on how the cart
+             * was created.
+             */
+
+            const properties =
+                item.properties ||
+                item.line_item_properties ||
+                {};
+
+
+            if (
+                Array.isArray(properties)
+            ) {
+
+                const converted = {};
+
+                properties.forEach(
+                    property => {
+
+                        if (
+                            property &&
+                            property.name
+                        ) {
+
+                            converted[
+                                String(property.name)
+                            ] =
+                                property.value == null
+                                    ? ""
+                                    : String(property.value);
+
+                        }
+
+                    }
+                );
+
+                return converted;
+
+            }
+
+
+            if (
+                typeof properties === "object"
+            ) {
+
+                return properties;
+
+            }
+
+
+            return {};
+
+        }
+
+
+        /* =========================================================
+           FIND PROPERTY
+        ========================================================= */
+
+        function findProperty(
+            properties,
+            possibleNames
+        ) {
+
+            const keys =
+                Object.keys(
+                    properties || {}
+                );
+
+
+            for (
+                const wantedName
+                of possibleNames
+            ) {
+
+                const exact =
+                    keys.find(
+                        key =>
+                            key.toLowerCase() ===
+                            wantedName.toLowerCase()
+                    );
+
+
+                if (exact) {
+
+                    return properties[
+                        exact
+                    ];
+
+                }
+
+            }
+
+
+            /*
+             * Second pass:
+             * Ignore spaces, underscores and hyphens.
+             */
+
+            function normalize(value) {
+
+                return String(value)
+                    .toLowerCase()
+                    .replace(
+                        /[\s_-]/g,
+                        ""
+                    );
+
+            }
+
+
+            const normalizedWanted =
+                possibleNames.map(
+                    normalize
+                );
+
+
+            const matchingKey =
+                keys.find(
+                    key =>
+                        normalizedWanted.includes(
+                            normalize(key)
+                        )
+                );
+
+
+            if (matchingKey) {
+
+                return properties[
+                    matchingKey
+                ];
+
+            }
+
+
+            return "";
+
+        }
+
+
+        /* =========================================================
+           FIND VERIFIED FREE FIRE DATA
+        ========================================================= */
+
+        function getFreeFireVerification(item) {
+
+            const properties =
+                getItemProperties(item);
+
+
+            const uid =
+                findProperty(
+                    properties,
+                    [
+                        "Player ID",
+                        "PlayerID",
+                        "UID"
+                    ]
+                );
+
+
+            const nickname =
+                findProperty(
+                    properties,
+                    [
+                        "Free Fire Player Name",
+                        "Player Name",
+                        "Nickname"
+                    ]
+                );
+
+
+            const region =
+                findProperty(
+                    properties,
+                    [
+                        "Free Fire Region",
+                        "Region",
+                        "Server"
+                    ]
+                );
+
+
+            const level =
+                findProperty(
+                    properties,
+                    [
+                        "Free Fire Level",
+                        "Level"
+                    ]
+                );
+
+
+            const verified =
+                findProperty(
+                    properties,
+                    [
+                        "Free Fire Verified",
+                        "Verified"
+                    ]
+                );
+
+
+            const isVerified =
+                String(
+                    verified || ""
+                ).toLowerCase() ===
+                "yes";
+
+
+            if (
+                uid ||
+                nickname ||
+                region ||
+                level ||
+                isVerified
+            ) {
+
+                return {
+
+                    uid:
+                        String(
+                            uid || ""
+                        ),
+
+                    nickname:
+                        String(
+                            nickname || ""
+                        ),
+
+                    region:
+                        String(
+                            region || ""
+                        ),
+
+                    level:
+                        String(
+                            level || ""
+                        ),
+
+                    verified:
+                        isVerified
+
+                };
+
+            }
+
+
+            return null;
+
+        }
+
+
+        /* =========================================================
+           FIND VERIFIED GAME DATA
+        ========================================================= */
+
+        function findVerifiedGameData(cart) {
+
+            if (
+                !cart ||
+                !Array.isArray(
+                    cart.items
+                )
+            ) {
+
+                return null;
+
+            }
+
+
+            for (
+                const item
+                of cart.items
+            ) {
+
+                const verification =
+                    getFreeFireVerification(
+                        item
+                    );
+
+
+                if (verification) {
+
+                    return {
+
+                        type: "free-fire",
+
+                        product: item,
+
+                        ...verification
+
+                    };
+
+                }
+
+            }
+
+
+            return null;
+
+        }
+
+
+        /* =========================================================
+           DISPLAY VERIFIED PLAYER
         ========================================================= */
 
         function displayGameFields(cart) {
@@ -850,7 +1247,9 @@
 
 
             if (!card || !fields) {
+
                 return;
+
             }
 
 
@@ -869,6 +1268,9 @@
                 fields.innerHTML =
                     "";
 
+                verifiedGameData =
+                    null;
+
                 return;
 
             }
@@ -878,6 +1280,138 @@
                 "block";
 
 
+            /*
+             * -----------------------------------------------------
+             * FREE FIRE
+             * -----------------------------------------------------
+             */
+
+            const freeFire =
+                getFreeFireVerification(
+                    gameItem
+                );
+
+
+            if (freeFire) {
+
+                verifiedGameData = {
+
+                    type: "free-fire",
+
+                    product: gameItem,
+
+                    ...freeFire
+
+                };
+
+
+                fields.innerHTML = `
+
+                    <div class="verified-player">
+
+                        <div class="verified-header">
+
+                            <div class="verified-title">
+                                ✓ Verified Free Fire Player
+                            </div>
+
+                            <div class="verified-subtitle">
+                                Your verified account details
+                                from the product page
+                            </div>
+
+                        </div>
+
+
+                        <div class="verified-row">
+
+                            <span class="verified-label">
+                                Player ID
+                            </span>
+
+                            <span class="verified-value">
+                                ${escapeHTML(
+                    freeFire.uid || "—"
+                )}
+                            </span>
+
+                        </div>
+
+
+                        <div class="verified-row">
+
+                            <span class="verified-label">
+                                Nickname
+                            </span>
+
+                            <span class="verified-value">
+                                ${escapeHTML(
+                    freeFire.nickname || "—"
+                )}
+                            </span>
+
+                        </div>
+
+
+                        <div class="verified-row">
+
+                            <span class="verified-label">
+                                Server / Region
+                            </span>
+
+                            <span class="verified-value">
+                                ${escapeHTML(
+                    freeFire.region || "—"
+                )}
+                            </span>
+
+                        </div>
+
+
+                        <div class="verified-row">
+
+                            <span class="verified-label">
+                                Level
+                            </span>
+
+                            <span class="verified-value">
+                                ${escapeHTML(
+                    freeFire.level || "—"
+                )}
+                            </span>
+
+                        </div>
+
+
+                        <div class="verified-row">
+
+                            <span class="verified-label">
+                                Status
+                            </span>
+
+                            <span class="verified-value verified-check">
+                                ✓ Verified
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+                return;
+
+            }
+
+
+            /*
+             * -----------------------------------------------------
+             * MOBILE LEGENDS
+             * -----------------------------------------------------
+             *
+             * Keep the existing behavior for Mobile Legends.
+             */
+
             if (
                 isMobileLegends(
                     gameItem
@@ -886,51 +1420,62 @@
 
                 fields.innerHTML = `
 
-            <label for="player-id">
-                UID
-            </label>
+                    <label for="player-id">
+                        UID
+                    </label>
 
-            <input
-                type="text"
-                id="player-id"
-                placeholder="Enter your Mobile Legends UID"
-                autocomplete="off"
-            >
+                    <input
+                        type="text"
+                        id="player-id"
+                        placeholder="Enter your Mobile Legends UID"
+                        autocomplete="off"
+                    >
 
 
-            <label for="region">
-                Region
-            </label>
+                    <label for="region">
+                        Region
+                    </label>
 
-            <input
-                type="text"
-                id="region"
-                placeholder="Enter your Region"
-                autocomplete="off"
-            >
+                    <input
+                        type="text"
+                        id="region"
+                        placeholder="Enter your Region"
+                        autocomplete="off"
+                    >
 
-        `;
+                `;
 
-            }
+                verifiedGameData =
+                    null;
 
-            else {
-
-                fields.innerHTML = `
-
-            <label for="player-id">
-                Player ID / UID
-            </label>
-
-            <input
-                type="text"
-                id="player-id"
-                placeholder="Enter your Player ID / UID"
-                autocomplete="off"
-            >
-
-        `;
+                return;
 
             }
+
+
+            /*
+             * -----------------------------------------------------
+             * OTHER GAMES
+             * -----------------------------------------------------
+             */
+
+            fields.innerHTML = `
+
+                <label for="player-id">
+                    Player ID / UID
+                </label>
+
+                <input
+                    type="text"
+                    id="player-id"
+                    placeholder="Enter your Player ID / UID"
+                    autocomplete="off"
+                >
+
+            `;
+
+            verifiedGameData =
+                null;
 
         }
 
@@ -963,11 +1508,11 @@
 
                 container.innerHTML = `
 
-            <div class="empty">
-                Your cart is empty.
-            </div>
+                    <div class="empty">
+                        Your cart is empty.
+                    </div>
 
-        `;
+                `;
 
 
                 total.textContent =
@@ -1050,57 +1595,61 @@
 
                         image = `
 
-                    <img
-                        class="product-image"
-                        src="${escapeHTML(item.image)}"
-                        alt="${escapeHTML(title)}"
-                    >
+                            <img
+                                class="product-image"
+                                src="${escapeHTML(item.image)}"
+                                alt="${escapeHTML(title)}"
+                            >
 
-                `;
+                        `;
 
                     }
 
 
                     html += `
 
-                <div class="product">
+                        <div class="product">
 
-                    <div class="product-left">
+                            <div class="product-left">
 
-                        ${image}
+                                ${image}
 
-                        <div>
+                                <div>
 
-                            <div class="product-name">
-                                ${escapeHTML(title)}
-                            </div>
+                                    <div class="product-name">
+                                        ${escapeHTML(title)}
+                                    </div>
 
-                            <div class="product-info">
+                                    <div class="product-info">
 
-                                ${variant
-                            ? escapeHTML(variant) + " · "
+                                        ${variant
+                            ? escapeHTML(
+                                variant
+                            ) + " · "
                             : ""
                         }
 
-                                Quantity:
-                                ${quantity}
+                                        Quantity:
+                                        ${quantity}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="product-price">
+
+                                ${formatMoney(
+                            linePrice
+                        )}
 
                             </div>
 
                         </div>
 
-                    </div>
-
-
-                    <div class="product-price">
-
-                        ${formatMoney(linePrice)}
-
-                    </div>
-
-                </div>
-
-            `;
+                    `;
 
                 }
             );
@@ -1148,7 +1697,9 @@
 
 
             if (!selected) {
+
                 return;
+
             }
 
 
@@ -1203,8 +1754,11 @@
 
 
             window.scrollTo({
+
                 top: 0,
+
                 behavior: "smooth"
+
             });
 
         }
@@ -1231,8 +1785,11 @@
 
 
             window.scrollTo({
+
                 top: 0,
+
                 behavior: "smooth"
+
             });
 
         }
@@ -1416,8 +1973,19 @@
                 );
 
 
+                /*
+                 * Show cart and automatically
+                 * read verified player data.
+                 */
+
                 displayCart(
                     currentCart
+                );
+
+
+                console.log(
+                    "Verified game data:",
+                    verifiedGameData
                 );
 
             }
@@ -1434,21 +2002,21 @@
                     "cart-items"
                 ).innerHTML = `
 
-            <div class="empty">
+                    <div class="empty">
 
-                Your cart could not be loaded.
+                        Your cart could not be loaded.
 
-                <br><br>
+                        <br><br>
 
-                <small>
-                    ${escapeHTML(
+                        <small>
+                            ${escapeHTML(
                     error.message
                 )}
-                </small>
+                        </small>
 
-            </div>
+                    </div>
 
-        `;
+                `;
 
 
                 document.getElementById(
@@ -1497,7 +2065,6 @@
             .addEventListener(
                 "click",
                 async function () {
-
 
                     const button =
                         document.getElementById(
@@ -1607,16 +2174,43 @@
                         );
 
 
-                    const playerId =
+                    let playerId =
                         playerIdElement
                             ? playerIdElement.value.trim()
                             : "";
 
 
-                    const region =
+                    let region =
                         regionElement
                             ? regionElement.value.trim()
                             : "";
+
+
+                    /*
+                     * IMPORTANT:
+                     *
+                     * For Free Fire, use the VERIFIED
+                     * information from Shopify cart properties.
+                     *
+                     * There is no second verification.
+                     */
+
+                    if (
+                        verifiedGameData &&
+                        verifiedGameData.type ===
+                        "free-fire"
+                    ) {
+
+                        playerId =
+                            verifiedGameData.uid ||
+                            playerId;
+
+
+                        region =
+                            verifiedGameData.region ||
+                            region;
+
+                    }
 
 
                     /* =============================================
@@ -1686,16 +2280,50 @@
                     }
 
 
+                    /*
+                     * If this is a Free Fire product,
+                     * require the existing product-page
+                     * verification to be present.
+                     */
+
+                    if (
+                        verifiedGameData &&
+                        verifiedGameData.type ===
+                        "free-fire"
+                    ) {
+
+                        if (
+                            !verifiedGameData.uid ||
+                            !verifiedGameData.verified
+                        ) {
+
+                            showError(
+                                "Your Free Fire Player ID is not verified. Please return to the product page and verify it."
+                            );
+
+                            return;
+
+                        }
+
+                    }
+
+
                     const gameDetailsCard =
                         document.getElementById(
                             "game-details-card"
                         );
 
 
+                    /*
+                     * For other games that still use
+                     * manual UID fields.
+                     */
+
                     if (
                         gameDetailsCard &&
                         gameDetailsCard.style.display !==
-                        "none"
+                        "none" &&
+                        !verifiedGameData
                     ) {
 
                         if (!playerId) {
@@ -1749,7 +2377,7 @@
 
                         /* =========================================
                            STEP 1
-                           UPLOAD SCREENSHOT TO CLOUDINARY
+                           UPLOAD SCREENSHOT
                         ========================================= */
 
                         button.textContent =
@@ -1838,12 +2466,6 @@
                         }
 
 
-                        console.log(
-                            "Cloudinary screenshot URL:",
-                            paymentScreenshot
-                        );
-
-
                         /* =========================================
                            STEP 2
                            CREATE SHOPIFY ORDER
@@ -1857,18 +2479,6 @@
                             "Payment screenshot uploaded. Creating your Shopify order..."
                         );
 
-
-                        /*
-                         * IMPORTANT:
-                         *
-                         * Your server.js /create-order
-                         * expects normal JSON.
-                         *
-                         * It does NOT have multer attached
-                         * to /create-order.
-                         *
-                         * Therefore we send JSON here.
-                         */
 
                         const orderPayload = {
 
@@ -1889,6 +2499,12 @@
                             items:
                                 currentCart.items,
 
+
+                            /*
+                             * These values are automatically
+                             * taken from the verified product
+                             * page for Free Fire.
+                             */
 
                             playerId:
                                 playerId,
@@ -2042,30 +2658,30 @@
 
                         let successHTML = `
 
-                    <strong>
-                        ✅ Order created successfully!
-                    </strong>
+                            <strong>
+                                ✅ Order created successfully!
+                            </strong>
 
-                    <br>
+                            <br>
 
-                    Your payment has been submitted.
+                            Your payment has been submitted.
 
-                `;
+                        `;
 
 
                         if (orderName) {
 
                             successHTML += `
 
-                        <div class="order-number">
+                                <div class="order-number">
 
-                            Order ${escapeHTML(
+                                    Order ${escapeHTML(
                                 orderName
                             )}
 
-                        </div>
+                                </div>
 
-                    `;
+                            `;
 
                         }
 
@@ -2098,15 +2714,25 @@
 
 
                         console.log(
+                            "Verified Game Data:",
+                            verifiedGameData
+                        );
+
+
+                        console.log(
                             "======================================"
                         );
-                        setTimeout(function () {
 
-                            window.location.href =
-                                "https://topupmandu.com/?order_success=1";
 
-                        }, 1500);
+                        setTimeout(
+                            function () {
 
+                                window.location.href =
+                                    "https://topupmandu.com/?order_success=1";
+
+                            },
+                            1500
+                        );
 
                     }
 
