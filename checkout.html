@@ -1065,10 +1065,45 @@
 
 
         /* =========================================================
+           FREE FIRE PRODUCT DETECTION
+        ========================================================= */
+
+        function isFreeFireProduct(item) {
+
+            const handle =
+                String(
+                    item?.handle ||
+                    item?.product_handle ||
+                    ""
+                ).toLowerCase().trim();
+
+            const title =
+                String(
+                    item?.title ||
+                    item?.product_title ||
+                    ""
+                ).toLowerCase().trim();
+
+            return (
+                handle === "free-fire-diamond" ||
+                handle === "free-fire-diamonds" ||
+                title.includes("free fire diamond")
+            );
+        }
+
+
+        /* =========================================================
            FIND VERIFIED FREE FIRE DATA
         ========================================================= */
 
         function getFreeFireVerification(item) {
+
+            /* IMPORTANT: Free Fire verification must NEVER be
+               detected from generic Player ID / Region properties.
+               Only a real Free Fire product can use this block. */
+            if (!isFreeFireProduct(item)) {
+                return null;
+            }
 
             const properties =
                 getItemProperties(item);
